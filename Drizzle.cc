@@ -150,6 +150,13 @@ XS(xs_query_run_all) {
     if (ret != DRIZZLE_RETURN_OK) {
         pl::Carp::croak("drizzle_query_run_all:%s\n", drizzle_error(&(self->dr)));
     }
+
+    pl::Array results;
+    std::vector<drizzle_result_st*>::iterator iter = self->results->begin();
+    for (; iter!=self->results->end(); iter++) {
+        results->push(
+    }
+
     c.return_true();
 }
 
