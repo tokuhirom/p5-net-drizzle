@@ -1,6 +1,6 @@
 /**
  * Devel::BindPP - bind C++ to Perl
- * @version 0.02
+ * @version 0.03
  * @author tokuhirom
  * @see http://tokuhirom.github.com/devel-bindpp/hierarchy.html
  */
@@ -13,8 +13,8 @@
 // TODO: handle gv
 // TODO: Str->utf8_on/Str->utf8_off
 // TODO: Str->len_bytes() / Str->len()
-// TODO: Value->true() # SvTRUE()
 // TODO: Scalar->weaken / Scalar->is_weak
+// TODO: handle signals?
 
 extern "C" {
 #include "EXTERN.h"
@@ -23,6 +23,11 @@ extern "C" {
 #include "ppport.h"
 #include <cstdarg>
 };
+
+#ifdef _WIN32
+# undef stderr
+# undef stdout
+#endif
 
 namespace pl {
     class Str;
@@ -36,6 +41,69 @@ namespace pl {
     class Package;
     class Code;
     class Ctx;
+    class Scalar;
+ 
+    /// PerlIO class
+    class IO {
+    public:
+        /// *STDERR
+        static PerlIO* stderr() {
+            return PerlIO_stderr();
+        }
+        /// *STDOUT
+        static PerlIO* stdout() {
+            return PerlIO_stdout();
+        }
+        /// printf to stdout
+        static void printf(const char *format, ...) {
+            va_list args;
+            va_start(args, format);
+            PerlIO_vprintf(IO::stdout(), format, args);
+            va_end(args);
+        }
+        /// just a printf
+        static void printf(PerlIO* io, const char *format, ...) {
+            va_list args;
+            va_start(args, format);
+            PerlIO_vprintf(io, format, args);
+            va_end(args);
+        }
+    };
+
+    /**
+     * croak/warn
+     */
+    class Carp {
+    public:
+        static void croak(const char * format, ...) {
+            va_list args;
+            va_start(args, format);
+            Perl_vcroak(aTHX_ format, &args);
+            va_end(args);
+        }
+        static void warn(const char * format, ...) {
+            va_list args;
+            va_start(args, format);
+            Perl_vwarn(aTHX_ format, &args);
+            va_end(args);
+        }
+    };
+
+    /**
+     * current context registrar
+     */
+    std::vector<Ctx*> ctxstack;
+    class CurCtx {
+    public:
+        static Ctx * get() {
+            if (ctxstack.size() > 0) {
+                return ctxstack[ctxstack.size()-1];
+            } else {
+                Carp::croak("Devel::BindPP: missing context");
+                throw; // don't reach here
+            }
+        }
+    };
 
     /**
      * abstract base class for perl values
@@ -55,14 +123,14 @@ namespace pl {
          * @see sv_dump()
          */
         void dump() {
-            sv_dump(val);
+            sv_dump(this->val);
         }
         /**
          * increment the reference counter for this value
          * @see SvREFCNT_inc
          */
         void refcnt_inc() {
-            SvREFCNT_inc(this->val);
+            SvREFCNT_inc_simple_void(this->val);
         }
         /**
          * decrement the reference counter for this value
@@ -71,10 +139,21 @@ namespace pl {
         void refcnt_dec() {
             SvREFCNT_dec(this->val);
         }
+        /** get a reference count
+         * @see SvREFCNT
+         */
+        int refcnt() {
+            return SvREFCNT(this->val);
+        }
+        bool is_true() {
+            return SvTRUE(this->val);
+        }
         /**
          * get a reference of this value
          */
         Reference* reference();
+        ~Value() {
+        }
     protected:
         SV* val;
         Value() { }
@@ -105,12 +184,6 @@ namespace pl {
             return this;
         }
         /**
-         * serialize this object to real perl variable
-         */
-        SV * serialize() {
-            return val;
-        }
-        /**
          * this variable is just a string.change the type
          */
         Str* as_str();
@@ -134,8 +207,45 @@ namespace pl {
          * this variable is just a reference.change the type
          */
         Reference* as_ref();
+        Scalar * clone () {
+            return Scalar::create(newSVsv(this->val));
+        }
+
+        template <class T>
+        static Scalar *to_perl(T s) {
+            return Scalar::create(to_sv(s));
+        }
     protected:
         Scalar(SV* _v) : Value(_v) { }
+        static Scalar * create(SV* _v);
+        static SV *to_sv(const char* s) {
+            return (newSVpv(s, strlen(s)));
+        }
+        static SV *to_sv(unsigned int v) {
+            return (newSVuv(v));
+        }
+        static SV *to_sv(int v) {
+            return (newSViv(v));
+        }
+        static SV *to_sv(I32 v) {
+            return (newSViv(v));
+        }
+        static SV *to_sv(double v) {
+            return (newSVnv(v));
+        }
+        static SV *to_sv(Scalar * v) {
+            if (v && v->val) {
+                return (v->val);
+            } else {
+                return (&PL_sv_undef);
+            }
+        }
+        static SV *to_sv(std::string& v) {
+            return (newSVpv(v.c_str(), v.length()));
+        }
+        static SV *to_sv(bool b) {
+            return (b ? &PL_sv_yes : &PL_sv_no);
+        }
     };
 
     /**
@@ -161,7 +271,6 @@ namespace pl {
     class Int : public Scalar {
         friend class Scalar;
     public:
-        Int(int _i) : Scalar(newSViv(_i)) { }
         /**
          * convert to C level integer
          */
@@ -298,14 +407,13 @@ namespace pl {
         Reference* del(const char*key, I32 klen);
 
         /// store value to hash
-        void store(const char*key, Scalar*value) {
+        template <class T>
+        void store(const char*key, T value) {
             this->store(key, strlen(key), value);
         }
-        void store(const char*key, Scalar value) {
-            this->store(key, strlen(key), &value);
-        }
         /// store value to hash
-        void  store(const char*key, I32 klen, Scalar*value);
+        template <class T>
+        void  store(const char*key, I32 klen,  T value);
         /// Evaluates the hash in scalar context and returns the result.
         Scalar* scalar();
         /// Undefines the hash.
@@ -324,13 +432,15 @@ namespace pl {
     public:
         Array() : Value((SV*)newAV()) { }
         /// push the value
-        void push(Value v) {
-            this->push(&v);
+        void push(Scalar* s) {
+            s->refcnt_inc();
+            av_push((AV*)this->val, s->val);
         }
-        /// push the value
-        void push(Value * v) {
-            v->refcnt_inc();
-            av_push((AV*)this->val, v->val);
+        template <class T>
+        void push(T v) {
+            SV * s = Scalar::to_sv(v);
+            SvREFCNT_inc_simple_void(s);
+            av_push((AV*)this->val, s);
         }
         /**
           * Unshift the given number of "undef" values onto the beginning
@@ -359,7 +469,8 @@ namespace pl {
         }
 
         /// store values to array
-        Scalar * store(I32 key, Scalar* v);
+        template <class T>
+        Scalar * store(I32 key, T v);
         /// Clears an array, making it empty.
         void clear() {
             av_clear((AV*)this->val);
@@ -375,26 +486,6 @@ namespace pl {
     protected:
         Array(AV* _a) : Value((SV*)_a) { }
     };
-
-    /**
-     * croak/warn
-     */
-    class Carp {
-    public:
-        static void croak(const char * format, ...) {
-            va_list args;
-            va_start(args, format);
-            Perl_vcroak(aTHX_ format, &args);
-            va_end(args);
-        }
-        static void warn(const char * format, ...) {
-            va_list args;
-            va_start(args, format);
-            Perl_vwarn(aTHX_ format, &args);
-            va_end(args);
-        }
-    };
-
 
     /**
      * XSUB context class
@@ -415,14 +506,14 @@ namespace pl {
             return s;
         }
         /// return the one scalar value
-        void ret(Scalar s) {
-            this->ret(0, &s);
-        }
-        void ret(Scalar* s) {
+        template <class T>
+        void ret(T n) {
+            SV * s = Scalar::to_sv(n);
             this->ret(0, s);
         }
-        void ret(int n, Scalar* s) {
-            this->ret(n, s ? s->serialize() : &PL_sv_undef);
+        template <class T>
+        void ret(int n, T v) {
+            return this->ret(n, Scalar::to_sv(v));
         }
         /// same as perl level wantarray()
         bool wantarray() {
@@ -478,7 +569,6 @@ namespace pl {
         SV ** mark;
         std::vector<Value*> allocated;
     };
-    std::vector<Ctx*> ctxstack;
     Ctx::Ctx() {
         this->initialize();
     }
@@ -509,23 +599,9 @@ namespace pl {
         ctxstack.pop_back();
     }
 
-    /**
-     * current context registrar
-     */
-    class CurCtx {
-    public:
-        static Ctx * get() {
-            if (ctxstack.size() > 0) {
-                return ctxstack[ctxstack.size()-1];
-            } else {
-                Carp::croak("Devel::BindPP: missing context");
-                throw; // don't reach here
-            }
-        }
-    };
-
     Reference * Reference::new_inc(Value* thing) {
-        Reference* ref = new Reference(newRV_inc(thing->val));
+        SV * v = newRV_inc(thing->val);
+        Reference * ref = new Reference(v);
         CurCtx::get()->register_allocated(ref);
         return ref;
     }
@@ -553,19 +629,17 @@ namespace pl {
     }
     Scalar * Array::pop() {
         SV* v = av_pop((AV*)this->val);
-        Scalar *s = new Scalar(v);
-        CurCtx::get()->register_allocated(s);
-        return s;
+        return Scalar::create(v);
     }
     Scalar * Array::shift() {
         SV* v = av_shift((AV*)this->val);
-        Scalar *s = new Scalar(v);
-        CurCtx::get()->register_allocated(s);
-        return s;
+        return Scalar::create(v);
     }
-    Scalar * Array::store(I32 key, Scalar* _v) {
-        _v->refcnt_inc();
-        SV** v = av_store((AV*)this->val, key, _v->val);
+    template <class T>
+    Scalar * Array::store(I32 key, T arg) {
+        SV * _v = Scalar::to_sv(arg);
+        SvREFCNT_inc_simple_void(_v);
+        SV** v = av_store((AV*)this->val, key, _v);
         if (v) {
             Reference * ref = new Reference(*v);
             CurCtx::get()->register_allocated(ref);
@@ -580,17 +654,18 @@ namespace pl {
      */
     class Package {
     public:
-        Package(std::string _pkg) {
-            pkg = _pkg;
+        Package(std::string _pkg, const char *_file) {
+            this->pkg = _pkg;
+            this->file = _file;
             stash = gv_stashpvn(pkg.c_str(), pkg.length(), TRUE);
         }
         /**
          * install xsub
          * @see newXS
          */
-        void add_method(const char*name, XSUBADDR_t func, const char *file) {
+        void add_method(const char*name, XSUBADDR_t func) {
             char * buf = const_cast<char*>( (pkg + "::" + name).c_str() );
-            newXS(buf, func, const_cast<char*>(file));
+            newXS(buf, func, const_cast<char*>(this->file));
         }
         /**
          * add new const sub
@@ -599,8 +674,11 @@ namespace pl {
         void add_constant(const char *name, Value * val) {
             this->add_constant(name, val->val);
         }
-        void add_constant(const char *name, Value val) {
-            this->add_constant(name, val.val);
+
+        template <class T>
+        void add_constant(const char *name, T val) {
+            SV * s = Scalar::to_sv(val);
+            this->add_constant(name, s);
         }
     protected:
         void add_constant(const char *name, SV* val) {
@@ -609,6 +687,7 @@ namespace pl {
     private:
         std::string pkg;
         HV * stash;
+        const char * file;
     };
 
     /**
@@ -682,8 +761,7 @@ namespace pl {
             sp = PL_stack_sp; // SPAGAIN
 
             for (int i=0; i<count; i++) {
-                Scalar * s = new Scalar(newSVsv(*sp--));
-                CurCtx::get()->register_allocated(s);
+                Scalar * s = Scalar::create(newSVsv(*sp--));
                 retval->store(i, s);
             }
 
@@ -720,8 +798,7 @@ namespace pl {
             sp = PL_stack_sp; // SPAGAIN
 
             if (count != 0) {
-                *retval = new Scalar(newSVsv(*sp--));
-                CurCtx::get()->register_allocated(*retval);
+                *retval = Scalar::create(newSVsv(*sp--));
             }
 
             PL_stack_sp = sp; // PUTBACK
@@ -926,9 +1003,11 @@ namespace pl {
         CurCtx::get()->register_allocated(ref);
         return ref;
     }
-    void Hash::store(const char*key, I32 klen, Scalar*value) {
-        value->refcnt_inc();
-        hv_store((HV*)this->val, key, klen, value->val, 0);
+    template <class T>
+    void Hash::store(const char*key, I32 klen, T value) {
+        SV * v = Scalar::to_sv(value);
+        SvREFCNT_inc_simple_void(v);
+        hv_store((HV*)this->val, key, klen, v, 0);
     }
     Scalar* Hash::scalar() {
         Scalar*s = new Scalar(hv_scalar((HV*)this->val));
@@ -950,5 +1029,11 @@ namespace pl {
         Boolean* s = new Boolean(false);
         CurCtx::get()->register_allocated(s);
         return s;
+    }
+
+    Scalar* Scalar::create(SV* s) {
+        Scalar * v = new Scalar(s);
+        CurCtx::get()->register_allocated(v);
+        return v;
     }
 };

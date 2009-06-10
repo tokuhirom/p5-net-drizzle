@@ -24,7 +24,8 @@ XS(xs_new) {
         return;
     }
 
-    c.ret(pl::Pointer((void*)dr, "Net::Drizzle"));
+    pl::Pointer p((void*)dr, "Net::Drizzle");
+    c.ret(&p);
 }
 
 XS(xs_host) {
@@ -34,7 +35,7 @@ XS(xs_host) {
     const char * host = drizzle_con_host(&(self->con));
     if (host) {
         pl::Str h(host);
-        c.ret(pl::Str(host));
+        c.ret(host);
     } else {
         c.return_undef();
     }
@@ -45,7 +46,7 @@ XS(xs_port) {
     DEF_SELF;
 
     int port = drizzle_con_port(&(self->con));
-    c.ret(pl::Int(port));
+    c.ret(port);
 }
 
 XS(xs_set_tcp) {
@@ -65,7 +66,7 @@ XS(xs_user) {
 
     const char * user = drizzle_con_user(&(self->con));
     pl::Str h(user);
-    c.ret(pl::Str(user));
+    c.ret(user);
 }
 
 XS(xs_password) {
@@ -74,7 +75,7 @@ XS(xs_password) {
 
     const char * password = drizzle_con_password(&(self->con));
     pl::Str h(password);
-    c.ret(pl::Str(password));
+    c.ret(password);
 }
 
 XS(xs_set_auth) {
@@ -104,18 +105,18 @@ extern "C" {
     XS(boot_Net__Drizzle) {
         pl::BootstrapCtx bc;
 
-        pl::Package b("Net::Drizzle");
-        b.add_method("new",                   xs_new,                   __FILE__);
+        pl::Package b("Net::Drizzle", __FILE__);
+        b.add_method("new",                   xs_new);
 
-        b.add_method("host",                  xs_host,                  __FILE__);
-        b.add_method("port",                  xs_port,                  __FILE__);
-        b.add_method("set_tcp",               xs_set_tcp,               __FILE__);
+        b.add_method("host",                  xs_host);
+        b.add_method("port",                  xs_port);
+        b.add_method("set_tcp",               xs_set_tcp);
 
-        b.add_method("user",                  xs_user,                  __FILE__);
-        b.add_method("password",              xs_password,              __FILE__);
-        b.add_method("set_auth",              xs_set_auth,              __FILE__);
+        b.add_method("user",                  xs_user);
+        b.add_method("password",              xs_password);
+        b.add_method("set_auth",              xs_set_auth);
 
-        b.add_method("DESTROY",               xs_destroy,               __FILE__);
+        b.add_method("DESTROY",               xs_destroy);
     }
 }
 
