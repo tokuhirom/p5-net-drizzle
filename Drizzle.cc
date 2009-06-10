@@ -1,10 +1,13 @@
 #include "bindpp.h"
 #include <libdrizzle/drizzle_client.h>
 #include <cstdlib>
+#include <vector>
 
 typedef struct net_drizzle_c {
     drizzle_st dr;
     drizzle_con_st con;
+    std::vector<drizzle_query_st*> *queries;
+    std::vector<drizzle_result_st*> *results;
 } net_drizzle_context;
 
 #define DEF_SELF pl::Pointer * __ptr = c.arg(0)->as_pointer(); \
@@ -23,6 +26,8 @@ XS(xs_new) {
         pl::Carp::croak("drizzle_con_create:%s\n", drizzle_error(&(dr->dr)));
         return;
     }
+
+    dr->queries = new std::vector<drizzle_query_st*>();
 
     pl::Pointer p((void*)dr, "Net::Drizzle");
     c.ret(&p);
@@ -99,13 +104,53 @@ XS(xs_set_option_mysql) {
 
 XS(xs_escape) {
     pl::Ctx c(2);
-    DEF_SELF;
 
     pl::Str * src = c.arg(1)->as_str();
     char * buf = new char [src->length()*2+1];
     drizzle_escape_string(buf, src->to_c(), src->length());
     pl::Str dst(buf);
     c.ret(&dst);
+}
+
+XS(xs_con_clone) {
+    pl::Ctx c(1);
+    DEF_SELF;
+
+    drizzle_con_st *con = new drizzle_con_st;
+    if (drizzle_con_clone(&(self->dr), con, &(self->con)) == NULL) {
+        pl::Carp::croak("drizzle_con_clone:%s\n", drizzle_error(&(self->dr)));
+    }
+
+    pl::Pointer p((void*)con, "Net::Drizzle::Connection");
+    c.ret(&p);
+}
+
+XS(xs_query_add) {
+    pl::Ctx c(3);
+    DEF_SELF;
+
+    drizzle_con_st * con = c.arg(1)->as_pointer()->extract<drizzle_con_st*>();
+    pl::Str *query = c.arg(2)->as_str();
+    drizzle_query_st *ql = new drizzle_query_st;
+    drizzle_result_st *result = new drizzle_result_st;
+    self->queries->push_back(ql);
+    if (drizzle_query_add(&self->dr, ql, con, result, query->to_c(),
+                              query->length(), (drizzle_query_options_t)0, NULL) == NULL) {
+         pl::Carp::croak("drizzle_query_add:%s\n", drizzle_error(&(self->dr)));
+    }
+
+    c.return_true();
+}
+
+XS(xs_query_run_all) {
+    pl::Ctx c(1);
+    DEF_SELF;
+
+    drizzle_return_t ret = drizzle_query_run_all(&(self->dr));
+    if (ret != DRIZZLE_RETURN_OK) {
+        pl::Carp::croak("drizzle_query_run_all:%s\n", drizzle_error(&(self->dr)));
+    }
+    c.return_true();
 }
 
 XS(xs_destroy) {
@@ -115,6 +160,11 @@ XS(xs_destroy) {
 
     net_drizzle_c * d = p->extract<net_drizzle_c*>();
     drizzle_free(&(d->dr));
+
+    // TODO free each elems
+
+    delete d->results;
+    delete d->queries;
     delete d;
 
     c.return_true();
@@ -139,7 +189,19 @@ extern "C" {
 
         b.add_method("escape",                xs_escape);
 
+        b.add_method("con_clone",             xs_con_clone);
+
+        b.add_method("query_add",             xs_query_add);
+        b.add_method("query_run_all",         xs_query_run_all);
+
         b.add_method("DESTROY",               xs_destroy);
+
+        /*
+        {
+            pl::Package b("Net::Drizzle::Connection", __FILE__);
+            b.add_method("DESTROY", xs_con_destroy);
+        }
+        */
     }
 }
 
