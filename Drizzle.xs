@@ -165,7 +165,7 @@ CODE:
             SvREFCNT_inc_simple_void(s);
             av_push(res, s);
         }
-        RETVAL = newRV_noinc(res);
+        RETVAL = newRV_noinc((SV*)res);
     } else {
         RETVAL = &PL_sv_undef;
     }
