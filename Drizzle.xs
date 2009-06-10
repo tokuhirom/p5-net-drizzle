@@ -56,7 +56,7 @@ CODE:
     net_con *con;
     Newxz(con, 1, net_con);
     con->drizzle = self;
-    SvREFCNT_inc_simple_void(self);
+    SvREFCNT_inc(self);
     drizzle_st * drizzle = XS_STATE(drizzle_st*, self);
     if (drizzle_con_create(drizzle, &(con->con)) == NULL) {
         Perl_croak(aTHX_ "drizzle_con_create:NULL\n");
@@ -120,7 +120,7 @@ OUTPUT:
 void
 DESTROY(net_con *self)
 CODE:
-    SvREFCNT_dec(self->drizzle);
+    // SvREFCNT_dec(self->drizzle);
 
 MODULE = Net::Drizzle  PACKAGE = Net::Drizzle::Sth
 
