@@ -89,6 +89,25 @@ XS(xs_set_auth) {
     c.return_true();
 }
 
+XS(xs_set_option_mysql) {
+    pl::Ctx c(1);
+    DEF_SELF;
+
+    drizzle_con_add_options(&(self->con), DRIZZLE_CON_MYSQL);
+    c.return_true();
+}
+
+XS(xs_escape) {
+    pl::Ctx c(2);
+    DEF_SELF;
+
+    pl::Str * src = c.arg(1)->as_str();
+    char * buf = new char [src->length()*2+1];
+    drizzle_escape_string(buf, src->to_c(), src->length());
+    pl::Str dst(buf);
+    c.ret(&dst);
+}
+
 XS(xs_destroy) {
     pl::Ctx c(1);
 
@@ -115,6 +134,10 @@ extern "C" {
         b.add_method("user",                  xs_user);
         b.add_method("password",              xs_password);
         b.add_method("set_auth",              xs_set_auth);
+
+        b.add_method("set_option_mysql",      xs_set_option_mysql);
+
+        b.add_method("escape",                xs_escape);
 
         b.add_method("DESTROY",               xs_destroy);
     }

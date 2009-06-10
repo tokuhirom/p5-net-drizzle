@@ -31,8 +31,6 @@ Net::Drizzle -
     $dr->set_tcp('localhost', 10010);            # optional
     $dr->set_auth('dankogai', 'kogaidan'); # optional
     $dr->set_option_mysql();
-    $dr->set_charset('utf-8');
-    $dr->charset(); # => utf-8
 
     $dr->escape(q{"});
 
