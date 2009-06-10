@@ -6,7 +6,7 @@ can_cc or die "This module requires a C compiler";
 
 makemaker_args(
     OBJECT  => '$(O_FILES)',
-    LIBS    => [ '-lstdc++', '-ldrizzle' ],
+    LIBS    => '-lstdc++ -ldrizzle',
     CCFLAGS => '-g -Wall',
     CC      => 'g++',
     LD      => 'g++',
