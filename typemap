@@ -1,0 +1,25 @@
+TYPEMAP
+drizzle_st*          T_DRIZZLE
+net_con*               T_CON
+net_sth*               T_STH
+
+INPUT
+T_CON
+    $var = XS_STATE(net_con*, $arg);
+
+T_DRIZZLE
+    $var = XS_STATE(drizzle_st*, $arg);
+
+T_STH
+    $var = XS_STATE(net_sth*, $arg);
+
+OUTPUT
+T_DRIZZLE
+    XS_STRUCT2OBJ($arg, "Net::Drizzle", $var);
+
+T_CON
+    XS_STRUCT2OBJ($arg, "Net::Drizzle::Connection", $var);
+
+T_STH
+    XS_STRUCT2OBJ($arg, "Net::Drizzle::Sth", $var);
+

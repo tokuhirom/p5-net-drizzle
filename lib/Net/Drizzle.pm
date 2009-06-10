@@ -35,21 +35,16 @@ Net::Drizzle -
     $dr->escape(q{"});
 
     my $c1 = $dr->con_clone();
-    $dr->query_add($c1, 'select * from foo;');
+    my $s1 = $c1->query_add('select * from foo;');
 
-    my @results = $dr->run_all();
+    $dr->query_run_all();
 
-    my $i = 0;
-    for my $res (@results) {
-        if ($res->error_code != 0) {
-            die "@{[ $res->error_code ]}: @{[ $res->error ]}";
-        }
+    if ($s1->error_code != 0) {
+        die "@{[ $s1->error_code ]}: @{[ $s1->error ]}";
+    }
 
-        while (my $row = $res->next) {
-            printf "$i: $row[0], $row[1]";
-        }
-
-        $i++;
+    while (my @row = $s1->next) {
+        printf "$i: $row[0], $row[1]";
     }
 
 =head1 DESCRIPTION
