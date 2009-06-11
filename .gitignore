@@ -10,3 +10,4 @@ nytprof.out
 *.o
 *.bs
 Drizzle.c
+core

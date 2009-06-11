@@ -10,11 +10,11 @@ my $dr = Net::Drizzle->new();
     my $con2 = $con1->clone();
     isa_ok $con2, "Net::Drizzle::Connection";
 }
-ok 'finished 1';
+ok 1, 'finished 1';
 
 {
     my $con = Net::Drizzle::Connection->new;
     isa_ok $con, 'Net::Drizzle::Connection';
 }
-ok 'finished 2';
+ok 2, 'finished 2';
 
