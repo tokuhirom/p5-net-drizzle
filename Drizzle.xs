@@ -75,12 +75,62 @@ query_run_all(drizzle_st *self)
 CODE:
     drizzle_query_run_all(self);
 
+SV *
+escape(SV *class, SV* str)
+CODE:
+    STRLEN str_len;
+    const char * str_c = SvPV(str, str_len);
+    char * buf;
+    Newxz(buf, str_len*2+1, char);
+    uint64_t dst_len = drizzle_escape_string(buf, str_c, str_len);
+    RETVAL = newSVpvn(buf, dst_len);
+OUTPUT:
+    RETVAL
+
 MODULE = Net::Drizzle  PACKAGE = Net::Drizzle::Connection
 
 void
 set_db(net_con* self, const char *db)
 CODE:
     drizzle_con_set_db(&(self->con), db);
+
+const char *
+host(net_con* self)
+CODE:
+    RETVAL = drizzle_con_host(&(self->con));
+OUTPUT:
+    RETVAL
+
+const char *
+user(net_con* self)
+CODE:
+    RETVAL = drizzle_con_user(&(self->con));
+OUTPUT:
+    RETVAL
+
+const char *
+password(net_con* self)
+CODE:
+    RETVAL = drizzle_con_password(&(self->con));
+OUTPUT:
+    RETVAL
+
+U16
+port(net_con* self)
+CODE:
+    RETVAL = drizzle_con_port(&(self->con));
+OUTPUT:
+    RETVAL
+
+void
+set_tcp(net_con* self, const char *host, U16 port)
+CODE:
+    drizzle_con_set_tcp(&(self->con), host, port);
+
+void
+set_auth(net_con* self, const char *user, const char* password)
+CODE:
+    drizzle_con_set_auth(&(self->con), user, password);
 
 void
 add_options(net_con* self, int opt)

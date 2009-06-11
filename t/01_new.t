@@ -6,7 +6,7 @@ use Net::Drizzle;
 my $dr = Net::Drizzle->new();
 isa_ok $dr, 'Net::Drizzle';
 ok $dr;
-can_ok $dr, qw/DESTROY user host/;
+can_ok $dr, qw/DESTROY escape query_run_all/;
 
 __END__
 
