@@ -1,7 +1,6 @@
 use strict;
 use warnings;
 use Net::Drizzle;
-use Devel::Peek;
 
 my @s;
 my $limit = 10;
