@@ -108,11 +108,17 @@ Net::Drizzle::Connection::new()
 CODE:
     net_con * self;
     Newxz(self, 1, net_con);
-    if ((self->con = drizzle_con_create(NULL, NULL)) == NULL) {
+
+    drizzle_st * drizzle;
+    if ((drizzle = drizzle_create(NULL)) == NULL) {
+        Perl_croak(aTHX_ "drizzle_create:NULL\n");
+    }
+    if ((self->con = drizzle_con_create(drizzle, NULL)) == NULL) {
         Perl_croak(aTHX_ "drizzle_con_create:NULL\n");
     }
+
 	SV * ret = newSViv(0);
-    XS_STRUCT2OBJ(ret, "Net::Drizzle", drizzle_con_drizzle(self->con));
+    XS_STRUCT2OBJ(ret, "Net::Drizzle", drizzle);
     self->drizzle = ret;
     RETVAL = self;
 OUTPUT:
