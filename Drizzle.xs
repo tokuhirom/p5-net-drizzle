@@ -109,6 +109,8 @@ CODE:
     const char* query_c = SvPV(query, query_len);
     net_sth *sth;
     Newxz(sth, 1, net_sth);
+    SvREFCNT_inc(self->drizzle);
+    sth->drizzle = self->drizzle;
     if (drizzle_query_add(drizzle, &(sth->query), &(self->con), &(sth->result), query_c,
                               query_len, (drizzle_query_options_t)0, NULL) == NULL) {
          Perl_croak(aTHX_ "drizzle_query_add:%s\n", drizzle_error(drizzle));
@@ -120,7 +122,7 @@ OUTPUT:
 void
 DESTROY(net_con *self)
 CODE:
-    // SvREFCNT_dec(self->drizzle);
+    SvREFCNT_dec(self->drizzle);
 
 MODULE = Net::Drizzle  PACKAGE = Net::Drizzle::Sth
 
@@ -171,4 +173,9 @@ CODE:
     }
 OUTPUT:
     RETVAL
+
+void
+DESTROY(net_sth *self)
+CODE:
+    // SvREFCNT_dec(self->drizzle);
 
