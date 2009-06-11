@@ -89,6 +89,19 @@ OUTPUT:
 
 MODULE = Net::Drizzle  PACKAGE = Net::Drizzle::Connection
 
+net_con*
+Net::Drizzle::Connection::new()
+CODE:
+    net_con * self;
+    Newxz(self, 1, net_con);
+    self->drizzle = NULL;
+    if (drizzle_con_create(NULL, &(self->con)) == NULL) {
+        Perl_croak(aTHX_ "drizzle_con_create:NULL\n");
+    }
+    RETVAL = self;
+OUTPUT:
+    RETVAL
+
 void
 set_db(net_con* self, const char *db)
 CODE:
@@ -173,7 +186,7 @@ void
 DESTROY(net_con *self)
 CODE:
     drizzle_con_free(&(self->con));
-    if (self->drizzle) {
+    if (self->drizzle != NULL) {
         SvREFCNT_dec(self->drizzle);
     }
     Safefree(self);
