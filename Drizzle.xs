@@ -18,15 +18,17 @@ typedef struct net_con {
 typedef struct net_sth {
     SV * drizzle;
     SV * con;
+    drizzle_query_st *query;
     drizzle_result_st *result;
-    drizzle_query_st  *query;
 } net_sth;
 
-#if 0
+#if 1
 #define LOG(...) PerlIO_printf(PerlIO_stderr(), __VA_ARGS__)
 #else
 #define LOG(...)
 #endif
+
+#define DEF_RESULT(c) drizzle_result_st *result = (c)->result ? (c)->result : drizzle_query_result((c)->query)
 
 #define XS_STATE(type, x) \
     INT2PTR(type, SvROK(x) ? SvIV(SvRV(x)) : SvIV(x))
@@ -78,7 +80,7 @@ DESTROY(SV* _self)
 CODE:
     LOG("DESTROY drizzle 0x%X\n", (unsigned int)_self);
     drizzle_st *drizzle = XS_STATE(drizzle_st*, _self);
-    // drizzle_free(drizzle); // wtf? this cause segv.
+    drizzle_free(drizzle); // wtf? this cause segv.
 
 void
 query_run_all(drizzle_st *self)
@@ -195,13 +197,11 @@ CODE:
     SvREFCNT_inc(sth->drizzle);
     SvREFCNT_inc_simple_void(_self);
     LOG("CREATE query 0x%X\n", (unsigned int)self->drizzle);
-    if ((sth->result = drizzle_result_create(self->con, NULL)) == NULL) {
-         Perl_croak(aTHX_ "drizzle_result_create:%s\n", drizzle_error(drizzle));
-    }
-    if ((sth->query = drizzle_query_add(drizzle, NULL, self->con, sth->result, query_c,
+    if ((sth->query = drizzle_query_add(drizzle, NULL, self->con, NULL, query_c,
                               query_len, (drizzle_query_options_t)0, NULL)) == NULL) {
          Perl_croak(aTHX_ "drizzle_query_add:%s\n", drizzle_error(drizzle));
     }
+    sth->result = NULL;
     RETVAL = sth;
 OUTPUT:
     RETVAL
@@ -220,12 +220,9 @@ CODE:
     SvREFCNT_inc_simple_void(sth->drizzle);
     SvREFCNT_inc_simple_void(_self);
 
-    if ((sth->result = drizzle_result_create(self->con, NULL)) == NULL) {
-         Perl_croak(aTHX_ "drizzle_result_create:%s\n", drizzle_error(drizzle));
-    }
     drizzle_return_t ret;
     sth->query = NULL;
-    drizzle_query_str(self->con, sth->result, query, &ret);
+    sth->result = drizzle_query_str(self->con, NULL, query, &ret);
     if (ret != DRIZZLE_RETURN_OK) {
         Perl_croak(aTHX_ "drizzle_query_run_all:%s\n", drizzle_error(drizzle));
     }
@@ -252,37 +249,42 @@ MODULE = Net::Drizzle  PACKAGE = Net::Drizzle::Sth
 int
 error_code(net_sth *self)
 CODE:
-    RETVAL = drizzle_result_error_code(self->result);
+    DEF_RESULT(self);
+    RETVAL = drizzle_result_error_code(result);
 OUTPUT:
     RETVAL
 
 const char*
 error(net_sth *self)
 CODE:
-    RETVAL = drizzle_result_error(self->result);
+    DEF_RESULT(self);
+    RETVAL = drizzle_result_error(result);
 OUTPUT:
     RETVAL
 
 const char*
 info(net_sth *self)
 CODE:
-    RETVAL = drizzle_result_info(self->result);
+    DEF_RESULT(self);
+    RETVAL = drizzle_result_info(result);
 OUTPUT:
     RETVAL
 
 unsigned int
 column_count(net_sth *self)
 CODE:
-    RETVAL = drizzle_result_column_count(self->result);
+    DEF_RESULT(self);
+    RETVAL = drizzle_result_column_count(result);
 OUTPUT:
     RETVAL
 
 void
 buffer(net_sth *self)
 CODE:
-    drizzle_return_t ret = drizzle_result_buffer(self->result);
+    DEF_RESULT(self);
+    drizzle_return_t ret = drizzle_result_buffer(result);
     if (ret != DRIZZLE_RETURN_OK) {
-        drizzle_con_st * con = drizzle_result_drizzle_con(self->result);
+        drizzle_con_st * con = drizzle_result_drizzle_con(result);
         drizzle_st * drizzle = drizzle_con_drizzle(con);
         Perl_croak(aTHX_ "drizzle_result_buffer:%s\n", drizzle_error(drizzle));
     }
@@ -290,9 +292,10 @@ CODE:
 SV*
 row_next(net_sth *self)
 CODE:
+    DEF_RESULT(self);
     AV * res = newAV();
-    drizzle_row_t row = drizzle_row_next(self->result);
-    uint16_t cnt = drizzle_result_column_count(self->result);
+    drizzle_row_t row = drizzle_row_next(result);
+    uint16_t cnt = drizzle_result_column_count(result);
     if (row) {
         int i;
         for (i=0; i<cnt; i++) {
