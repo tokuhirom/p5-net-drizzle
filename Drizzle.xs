@@ -22,7 +22,7 @@ typedef struct net_sth {
     drizzle_query_st  *query;
 } net_sth;
 
-#if 1
+#if 0
 #define LOG(...) PerlIO_printf(PerlIO_stderr(), __VA_ARGS__)
 #else
 #define LOG(...)
@@ -69,7 +69,6 @@ CODE:
     if ((con->con = drizzle_con_create(drizzle, NULL)) == NULL) {
         Perl_croak(aTHX_ "drizzle_con_create:NULL\n");
     }
-    sv_dump(self);
     RETVAL = con;
 OUTPUT:
     RETVAL
@@ -108,10 +107,12 @@ Net::Drizzle::Connection::new()
 CODE:
     net_con * self;
     Newxz(self, 1, net_con);
-    self->drizzle = NULL;
     if ((self->con = drizzle_con_create(NULL, NULL)) == NULL) {
         Perl_croak(aTHX_ "drizzle_con_create:NULL\n");
     }
+	SV * ret = newSViv(0);
+    XS_STRUCT2OBJ(ret, "Net::Drizzle", drizzle_con_drizzle(self->con));
+    self->drizzle = ret;
     RETVAL = self;
 OUTPUT:
     RETVAL
@@ -205,6 +206,33 @@ CODE:
 OUTPUT:
     RETVAL
 
+net_sth*
+query_str(SV *_self, const char*query)
+CODE:
+    net_con * self = XS_STATE(net_con*, _self);
+    LOG("CREATE query_sth 0x%X\n", (unsigned int)self->drizzle);
+    drizzle_st * drizzle = XS_STATE(drizzle_st*, self->drizzle);
+
+    net_sth *sth;
+    Newxz(sth, 1, net_sth);
+    sth->drizzle = self->drizzle;
+    sth->con = _self;
+    SvREFCNT_inc_simple_void(sth->drizzle);
+    SvREFCNT_inc_simple_void(_self);
+
+    if ((sth->result = drizzle_result_create(self->con, NULL)) == NULL) {
+         Perl_croak(aTHX_ "drizzle_result_create:%s\n", drizzle_error(drizzle));
+    }
+    drizzle_return_t ret;
+    sth->query = NULL;
+    drizzle_query_str(self->con, sth->result, query, &ret);
+    if (ret != DRIZZLE_RETURN_OK) {
+        Perl_croak(aTHX_ "drizzle_query_run_all:%s\n", drizzle_error(drizzle));
+    }
+    RETVAL=sth;
+OUTPUT:
+    RETVAL
+
 void
 DESTROY(SV *_self)
 CODE:
@@ -248,6 +276,16 @@ CODE:
     RETVAL = drizzle_result_column_count(self->result);
 OUTPUT:
     RETVAL
+
+void
+buffer(net_sth *self)
+CODE:
+    drizzle_return_t ret = drizzle_result_buffer(self->result);
+    if (ret != DRIZZLE_RETURN_OK) {
+        drizzle_con_st * con = drizzle_result_drizzle_con(self->result);
+        drizzle_st * drizzle = drizzle_con_drizzle(con);
+        Perl_croak(aTHX_ "drizzle_result_buffer:%s\n", drizzle_error(drizzle));
+    }
 
 SV*
 next(net_sth *self)
