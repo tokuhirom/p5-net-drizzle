@@ -229,7 +229,7 @@ CODE:
     sth->query = NULL;
     sth->result = drizzle_query_str(self->con, NULL, query, &ret);
     if (ret != DRIZZLE_RETURN_OK) {
-        Perl_croak(aTHX_ "drizzle_query_run_all:%s\n", drizzle_error(drizzle));
+        Perl_croak(aTHX_ "drizzle_query_str:%s\n", drizzle_error(drizzle));
     }
     RETVAL=sth;
 OUTPUT:
@@ -249,7 +249,7 @@ CODE:
     }
     Safefree(self);
 
-MODULE = Net::Drizzle  PACKAGE = Net::Drizzle::Sth
+MODULE = Net::Drizzle  PACKAGE = Net::Drizzle::Result
 
 int
 error_code(net_sth *self)

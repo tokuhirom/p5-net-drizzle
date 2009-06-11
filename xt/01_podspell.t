@@ -8,3 +8,8 @@ __DATA__
 Tokuhiro Matsuno
 tokuhirom @*(#RJKLFHFSDLJF gmail.com
 Net::Drizzle
+libdrizzle
+db
+foo
+hostname
+tcp
