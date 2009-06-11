@@ -288,7 +288,7 @@ CODE:
     }
 
 SV*
-next(net_sth *self)
+row_next(net_sth *self)
 CODE:
     AV * res = newAV();
     drizzle_row_t row = drizzle_row_next(self->result);

@@ -21,7 +21,7 @@ for my $i (0..$limit) {
     my $s = $s[$i];
 
     die if $s->error_code != 0;
-    while (my $row = $s->next) {
+    while (my $row = $s->row_next) {
         print "$i:@$row\n";
     }
 }

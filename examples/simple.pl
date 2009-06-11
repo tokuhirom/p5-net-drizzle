@@ -11,7 +11,7 @@ my $s = $con->query_str("SELECT table_schema,table_name FROM tables");
 $s->buffer;
 
 die if $s->error_code != 0;
-while (my $row = $s->next) {
+while (my $row = $s->row_next) {
     print "@$row\n";
 }
 
