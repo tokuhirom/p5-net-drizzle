@@ -20,7 +20,7 @@ makemaker_args(
 );
 
 tests 't/*.t';
-author_tests 'xt';
+recursive_author_tests('xt');
 
 build_requires 'Test::More';
 use_test_base;
