@@ -172,7 +172,11 @@ OUTPUT:
 void
 DESTROY(net_con *self)
 CODE:
-    SvREFCNT_dec(self->drizzle);
+    drizzle_con_free(&(self->con));
+    if (self->drizzle) {
+        SvREFCNT_dec(self->drizzle);
+    }
+    Safefree(self);
 
 MODULE = Net::Drizzle  PACKAGE = Net::Drizzle::Sth
 
@@ -227,5 +231,9 @@ OUTPUT:
 void
 DESTROY(net_sth *self)
 CODE:
-    // SvREFCNT_dec(self->drizzle);
+    drizzle_result_free(&(self->result));
+    if (self->drizzle) {
+        SvREFCNT_dec(self->drizzle);
+    }
+    Safefree(self);
 
