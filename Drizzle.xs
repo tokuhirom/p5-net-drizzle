@@ -66,7 +66,6 @@ CODE:
     con->drizzle = self;
     LOG("CREATE con 0x%X, 0x%X(con_create)\n", (unsigned int)self, (unsigned int)con->drizzle);
     SvREFCNT_inc(self);
-    SvREFCNT_inc(self);
     drizzle_st * drizzle = XS_STATE(drizzle_st*, self);
     if ((con->con = drizzle_con_create(drizzle, NULL)) == NULL) {
         Perl_croak(aTHX_ "drizzle_con_create:NULL\n");
