@@ -7,8 +7,8 @@ my $limit = 10;
 
 cmpthese(
     1000 => {
-        # concurrent => \&concurrent,
-        serial     => \&serial,
+        concurrent => \&concurrent,
+        # serial     => \&serial,
     },
 );
 
@@ -22,7 +22,7 @@ sub serial {
         $s->buffer;
 
         die if $s->error_code != 0;
-        while (my $row = $s->next) {
+        while (my $row = $s->row_next) {
             # nop
         }
     }
@@ -45,7 +45,7 @@ sub concurrent {
         my $s = $s[$i];
 
         die if $s->error_code != 0;
-        while (my $row = $s->next) {
+        while (my $row = $s->row_next) {
             # nop
         }
     }
