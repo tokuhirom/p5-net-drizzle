@@ -22,7 +22,7 @@ typedef struct net_sth {
     drizzle_result_st *result;
 } net_sth;
 
-#if 1
+#if 0
 #define LOG(...) PerlIO_printf(PerlIO_stderr(), __VA_ARGS__)
 #else
 #define LOG(...)
