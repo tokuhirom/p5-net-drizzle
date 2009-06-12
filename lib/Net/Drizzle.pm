@@ -71,6 +71,10 @@ run all queries concurrently.
 
 quote meta chars.
 
+=item my $ver = Net::Drizzle->drizzle_version();
+
+get the version of libdrizzle
+
 =back
 
 =head1 BENCHMARKS

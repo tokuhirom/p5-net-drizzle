@@ -101,6 +101,13 @@ CODE:
 OUTPUT:
     RETVAL
 
+const char *
+drizzle_version(SV *class)
+CODE:
+    RETVAL = drizzle_version();
+OUTPUT:
+    RETVAL
+
 MODULE = Net::Drizzle  PACKAGE = Net::Drizzle::Connection
 
 net_con*
