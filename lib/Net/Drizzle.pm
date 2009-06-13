@@ -1,12 +1,9 @@
 package Net::Drizzle;
 use strict;
 use warnings;
-our $VERSION = '0.01';
 use 5.00800;
-use Exporter 'import';
 
-our %EXPORT_TAGS = (
-    'constants' => [qw/
+my $constants = [qw(
 DRIZZLE_DEFAULT_TCP_HOST
 DRIZZLE_DEFAULT_TCP_PORT
 DRIZZLE_DEFAULT_TCP_PORT_MYSQL
@@ -248,18 +245,27 @@ DRIZZLE_COLUMN_FLAGS_GET_FIXED_FIELDS
 DRIZZLE_COLUMN_FLAGS_IN_PART_FUNC
 DRIZZLE_COLUMN_FLAGS_IN_ADD_INDEX
 DRIZZLE_COLUMN_FLAGS_RENAMED
-    /]
-);
-our @ISA;
+)];
 
-eval {
-    require XSLoader;
-    XSLoader::load(__PACKAGE__, $VERSION);
-    1;
-} or do {
-    require DynaLoader;
-    push @ISA, 'DynaLoader';
-    __PACKAGE__->bootstrap($VERSION);
+our %EXPORT_TAGS = (
+    'constants' => $constants
+);
+our @EXPORT_OK = @$constants;
+
+our @ISA;
+BEGIN {
+    our $VERSION = '0.01';
+
+    eval {
+        require XSLoader;
+        XSLoader::load(__PACKAGE__, $VERSION);
+        1;
+    } or do {
+        require DynaLoader;
+        push @ISA, 'DynaLoader';
+        __PACKAGE__->bootstrap($VERSION);
+    };
+    use Exporter 'import';
 };
 
 1;
