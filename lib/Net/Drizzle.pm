@@ -273,7 +273,7 @@ __END__
 
 =head1 NAME
 
-Net::Drizzle -
+Net::Drizzle - perl bindings for libdrizzle
 
 =head1 SYNOPSIS
 
