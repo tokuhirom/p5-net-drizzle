@@ -3,7 +3,7 @@ use strict;
 use warnings;
 
 # alias for dbi users
-sub selectrow_arrayref { shift->row_next(@_) }
+sub fetchrow_arrayref { shift->row_next(@_) }
 
 1;
 __END__

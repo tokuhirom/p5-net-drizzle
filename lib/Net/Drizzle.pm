@@ -296,7 +296,8 @@ Net::Drizzle - perl bindings for libdrizzle
         die "@{[ $s1->error_code ]}: @{[ $s1->error ]}";
     }
 
-    while (my @row = $s1->row_next) {
+    while (my $row = $s1->row_next) {
+        my @row = @$row;
         printf "$i: $row[0], $row[1]";
     }
 
