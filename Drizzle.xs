@@ -52,6 +52,16 @@ typedef struct net_col {
         sv_setref_pv(sv, class, (void *) obj); \
     }
 
+net_col * _create_col(SV* result_sv, drizzle_column_st* col_raw) {
+    net_sth * result_sth = XS_STATE(net_sth*, result_sv);
+    net_col *col;
+    Newxz(col, 1, net_col);
+    col->drizzle = SvREFCNT_inc_simple(result_sth->drizzle);
+    col->con     = SvREFCNT_inc_simple(result_sth->con);
+    col->result  = SvREFCNT_inc_simple(result_sv);
+    col->col     = col_raw;
+    return col;
+}
 
 MODULE = Net::Drizzle  PACKAGE = Net::Drizzle
 
@@ -514,12 +524,10 @@ CODE:
     }
     printf("%d\n", result->options);
     Newxz(sth, 1, net_sth);
-    sth->drizzle = con->drizzle;
-    sth->result = result;
-    sth->con = _self;
-    sth->query = NULL;
-    SvREFCNT_inc_simple_void(sth->drizzle);
-    SvREFCNT_inc_simple_void(_self);
+    sth->drizzle = SvREFCNT_inc_simple(con->drizzle);
+    sth->result  = result;
+    sth->con     = SvREFCNT_inc_simple(_self);
+    sth->query   = NULL;
     RETVAL = sth;
 OUTPUT:
     RETVAL
@@ -683,6 +691,20 @@ CODE:
 
 MODULE = Net::Drizzle  PACKAGE = Net::Drizzle::Result
 
+net_col*
+column_next(SV *self_sv)
+CODE:
+    net_sth *self_sth = XS_STATE(net_sth*, self_sv);
+    DEF_RESULT(self_sth);
+    drizzle_column_st * col = drizzle_column_next(result);
+    if (col) {
+        RETVAL = _create_col(self_sv, col);
+    } else {
+        XSRETURN_UNDEF;
+    }
+OUTPUT:
+    RETVAL
+
 int
 error_code(net_sth *self)
 CODE:
@@ -790,13 +812,7 @@ CODE:
         Perl_croak(aTHX_ "drizzle_column_create:%s\n", drizzle_error(drizzle));
     }
 
-    net_col *col;
-    Newxz(col, 1, net_col);
-    col->drizzle = SvREFCNT_inc_simple(self_sth->drizzle);
-    col->con     = SvREFCNT_inc_simple(self_sth->con);
-    col->result  = SvREFCNT_inc_simple(self_sv);
-    col->col     = col_raw;
-    RETVAL = col;
+    RETVAL = _create_col(self_sv, col_raw);
 OUTPUT:
     RETVAL
 
@@ -866,11 +882,28 @@ CODE:
 MODULE = Net::Drizzle  PACKAGE = Net::Drizzle::Column
 
 
+
+const char*
+catalog(SV*self)
+CODE:
+    RETVAL = drizzle_column_catalog((XS_STATE(net_col*, self))->col);
+OUTPUT:
+    RETVAL
+
 SV*
 set_catalog(SV*self, const char* arg)
 CODE:
     drizzle_column_set_catalog((XS_STATE(net_col*, self))->col, arg);
     RETVAL = SvREFCNT_inc(self);
+OUTPUT:
+    RETVAL
+
+
+
+const char*
+db(SV*self)
+CODE:
+    RETVAL = drizzle_column_db((XS_STATE(net_col*, self))->col);
 OUTPUT:
     RETVAL
 
@@ -882,11 +915,29 @@ CODE:
 OUTPUT:
     RETVAL
 
+
+
+const char*
+table(SV*self)
+CODE:
+    RETVAL = drizzle_column_table((XS_STATE(net_col*, self))->col);
+OUTPUT:
+    RETVAL
+
 SV*
 set_table(SV*self, const char* arg)
 CODE:
     drizzle_column_set_table((XS_STATE(net_col*, self))->col, arg);
     RETVAL = SvREFCNT_inc(self);
+OUTPUT:
+    RETVAL
+
+
+
+const char*
+orig_table(SV*self)
+CODE:
+    RETVAL = drizzle_column_orig_table((XS_STATE(net_col*, self))->col);
 OUTPUT:
     RETVAL
 
@@ -898,11 +949,29 @@ CODE:
 OUTPUT:
     RETVAL
 
+
+
+const char*
+name(SV*self)
+CODE:
+    RETVAL = drizzle_column_name((XS_STATE(net_col*, self))->col);
+OUTPUT:
+    RETVAL
+
 SV*
 set_name(SV*self, const char* arg)
 CODE:
     drizzle_column_set_name((XS_STATE(net_col*, self))->col, arg);
     RETVAL = SvREFCNT_inc(self);
+OUTPUT:
+    RETVAL
+
+
+
+const char*
+orig_name(SV*self)
+CODE:
+    RETVAL = drizzle_column_orig_name((XS_STATE(net_col*, self))->col);
 OUTPUT:
     RETVAL
 
@@ -913,6 +982,7 @@ CODE:
     RETVAL = SvREFCNT_inc(self);
 OUTPUT:
     RETVAL
+
 
 
 SV*

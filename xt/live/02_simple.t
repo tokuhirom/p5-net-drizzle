@@ -3,7 +3,7 @@ use warnings;
 use Test::More;
 use Net::Drizzle;
 
-plan tests => 4;
+plan tests => 5;
 
 my $query = "SELECT table_schema,table_name FROM tables";
 
@@ -13,7 +13,18 @@ my $con = Net::Drizzle::Connection->new
                                   ->set_db("information_schema");
 my $sth = $con->query_str($query);
 $sth->buffer();
+check_column($sth);
 check_result($sth);
+
+sub check_column {
+    my $s = shift;
+    my @cols;
+    while (my $column = $s->column_next) {
+        push @cols, $column->name;
+    }
+    is join(',', @cols), 'table_schema,table_name';
+}
+
 
 sub check_result {
     my $s = shift;
