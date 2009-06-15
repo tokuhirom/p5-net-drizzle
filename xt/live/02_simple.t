@@ -7,9 +7,10 @@ plan tests => 4;
 
 my $query = "SELECT table_schema,table_name FROM tables";
 
-my $con = Net::Drizzle::Connection->new;
-$con->add_options(Net::Drizzle::DRIZZLE_CON_MYSQL);
-$con->set_db("information_schema");
+my $con = Net::Drizzle::Connection->new
+                                  ->set_tcp('127.0.0.1', '3306')
+                                  ->add_options(Net::Drizzle::DRIZZLE_CON_MYSQL)
+                                  ->set_db("information_schema");
 my $sth = $con->query_str($query);
 $sth->buffer();
 check_result($sth);

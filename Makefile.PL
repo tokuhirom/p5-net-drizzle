@@ -22,6 +22,11 @@ makemaker_args(
 tests 't/*.t';
 recursive_author_tests('xt');
 
+postamble <<'...';
+Drizzle.xs: Drizzle.xs.tt
+    tpage Drizzle.xs.tt > Drizzle.xs
+...
+
 build_requires 'Test::More';
 use_test_base;
 auto_include;

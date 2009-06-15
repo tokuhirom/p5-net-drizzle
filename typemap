@@ -2,6 +2,7 @@ TYPEMAP
 drizzle_st*          T_DRIZZLE
 net_con*               T_CON
 net_sth*               T_STH
+net_col*               T_COL
 
 INPUT
 T_CON
@@ -13,6 +14,9 @@ T_DRIZZLE
 T_STH
     $var = XS_STATE(net_sth*, $arg);
 
+T_COL
+    $var = XS_STATE(net_col*, $arg);
+
 OUTPUT
 T_DRIZZLE
     XS_STRUCT2OBJ($arg, "Net::Drizzle", $var);
@@ -22,4 +26,7 @@ T_CON
 
 T_STH
     XS_STRUCT2OBJ($arg, "Net::Drizzle::Result", $var);
+
+T_COL
+    XS_STRUCT2OBJ($arg, "Net::Drizzle::Column", $var);
 
