@@ -10,8 +10,7 @@ my $c1 = $dr->con_create()
             ->add_options(Net::Drizzle::DRIZZLE_CON_MYSQL)
             ->set_db("information_schema");
 for (0..$limit) {
-    my $c = $c1->clone;
-    push @s, $c->query_add("SELECT table_schema,table_name FROM tables");
+    push @s, $c1->clone->query_add("SELECT table_schema,table_name FROM tables");
 }
 
 $dr->query_run_all();
