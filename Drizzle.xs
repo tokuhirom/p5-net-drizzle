@@ -790,6 +790,21 @@ CODE:
 OUTPUT:
     RETVAL
 
+net_col*
+column_read(SV *self_sv)
+CODE:
+    net_sth * self_sth = XS_STATE(net_sth *, self_sv);
+    DEF_RESULT(self_sth);
+    drizzle_return_t ret;
+    drizzle_column_st *col = drizzle_column_read(result, NULL, &ret);
+    if (col != NULL) {
+        RETVAL = _create_col(self_sv, col);
+    } else {
+        XSRETURN_UNDEF;
+    }
+OUTPUT:
+    RETVAL
+
 SV*
 row_next(net_sth *self)
 CODE:
@@ -799,10 +814,26 @@ CODE:
     if (row) {
         RETVAL = row2arrayref(row, cnt);
     } else {
-        RETVAL = &PL_sv_undef;
+        XSRETURN_UNDEF;
     }
 OUTPUT:
     RETVAL
+
+SV*
+row_buffer(net_sth *self)
+CODE:
+    DEF_RESULT(self);
+    drizzle_return_t ret;
+    drizzle_row_t row = drizzle_row_buffer(result, &ret);
+    uint16_t cnt = drizzle_result_column_count(result);
+    if (ret == DRIZZLE_RETURN_OK && row) {
+        RETVAL = row2arrayref(row, cnt);
+    } else {
+        XSRETURN_UNDEF;
+    }
+OUTPUT:
+    RETVAL
+
 
 SV*
 set_column_count(SV*self_sv, U16 column_count)
@@ -900,7 +931,12 @@ MODULE = Net::Drizzle  PACKAGE = Net::Drizzle::Column
 const char*
 catalog(SV*self)
 CODE:
-    RETVAL = drizzle_column_catalog((XS_STATE(net_col*, self))->col);
+    const char *ret = drizzle_column_catalog((XS_STATE(net_col*, self))->col);
+    if (ret != NULL) {
+        RETVAL = ret;
+    } else {
+        XSRETURN_UNDEF;
+    }
 OUTPUT:
     RETVAL
 
@@ -917,7 +953,12 @@ OUTPUT:
 const char*
 db(SV*self)
 CODE:
-    RETVAL = drizzle_column_db((XS_STATE(net_col*, self))->col);
+    const char *ret = drizzle_column_db((XS_STATE(net_col*, self))->col);
+    if (ret != NULL) {
+        RETVAL = ret;
+    } else {
+        XSRETURN_UNDEF;
+    }
 OUTPUT:
     RETVAL
 
@@ -934,7 +975,12 @@ OUTPUT:
 const char*
 table(SV*self)
 CODE:
-    RETVAL = drizzle_column_table((XS_STATE(net_col*, self))->col);
+    const char *ret = drizzle_column_table((XS_STATE(net_col*, self))->col);
+    if (ret != NULL) {
+        RETVAL = ret;
+    } else {
+        XSRETURN_UNDEF;
+    }
 OUTPUT:
     RETVAL
 
@@ -951,7 +997,12 @@ OUTPUT:
 const char*
 orig_table(SV*self)
 CODE:
-    RETVAL = drizzle_column_orig_table((XS_STATE(net_col*, self))->col);
+    const char *ret = drizzle_column_orig_table((XS_STATE(net_col*, self))->col);
+    if (ret != NULL) {
+        RETVAL = ret;
+    } else {
+        XSRETURN_UNDEF;
+    }
 OUTPUT:
     RETVAL
 
@@ -968,7 +1019,12 @@ OUTPUT:
 const char*
 name(SV*self)
 CODE:
-    RETVAL = drizzle_column_name((XS_STATE(net_col*, self))->col);
+    const char *ret = drizzle_column_name((XS_STATE(net_col*, self))->col);
+    if (ret != NULL) {
+        RETVAL = ret;
+    } else {
+        XSRETURN_UNDEF;
+    }
 OUTPUT:
     RETVAL
 
@@ -985,7 +1041,12 @@ OUTPUT:
 const char*
 orig_name(SV*self)
 CODE:
-    RETVAL = drizzle_column_orig_name((XS_STATE(net_col*, self))->col);
+    const char *ret = drizzle_column_orig_name((XS_STATE(net_col*, self))->col);
+    if (ret != NULL) {
+        RETVAL = ret;
+    } else {
+        XSRETURN_UNDEF;
+    }
 OUTPUT:
     RETVAL
 
