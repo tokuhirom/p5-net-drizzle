@@ -267,6 +267,7 @@ BEGIN {
     };
     use Exporter 'import';
 };
+use Net::Drizzle::Result;
 
 1;
 __END__

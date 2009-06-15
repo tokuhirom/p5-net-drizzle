@@ -1,3 +1,13 @@
+package Net::Drizzle::Result;
+use strict;
+use warnings;
+
+# alias for dbi users
+sub selectrow_arrayref { shift->row_next(@_) }
+
+1;
+__END__
+
 =pod
 
 =head1 NAME
@@ -31,6 +41,10 @@ Buffer all data for a result.
 =item $result->row_next();
 
 Get next buffered row from a fully buffered result.
+
+=item $result->selectrow_arrayref();
+
+alias of row_next()
 
 =back
 
