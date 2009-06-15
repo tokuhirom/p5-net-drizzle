@@ -19,7 +19,7 @@ T_COL
 
 OUTPUT
 T_DRIZZLE
-    XS_STRUCT2OBJ($arg, "Net::Drizzle", $var);
+    XS_STRUCT2OBJ($arg, CLASS, $var);
 
 T_CON
     XS_STRUCT2OBJ($arg, "Net::Drizzle::Connection", $var);
