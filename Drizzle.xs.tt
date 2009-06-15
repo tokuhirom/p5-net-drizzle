@@ -34,7 +34,7 @@ typedef struct net_col {
     drizzle_column_st *col;
 } net_col;
 
-#if 1
+#if 0
 #define LOG(...) PerlIO_printf(PerlIO_stderr(), __VA_ARGS__)
 #else
 #define LOG(...)
