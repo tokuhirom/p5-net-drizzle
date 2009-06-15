@@ -63,6 +63,16 @@ net_col * _create_col(SV* result_sv, drizzle_column_st* col_raw) {
     return col;
 }
 
+SV* row2arrayref(drizzle_row_t row, uint16_t cnt) {
+    AV * res = newAV();
+    int i;
+    for (i=0; i<cnt; i++) {
+        SV *s = newSVpv(row[i], strlen(row[i]));
+        av_push(res, SvREFCNT_inc_simple(s));
+    }
+    return newRV_noinc((SV*)res);
+}
+
 MODULE = Net::Drizzle  PACKAGE = Net::Drizzle
 
 PROTOTYPES: DISABLE
@@ -356,6 +366,7 @@ CODE:
 SV *
 escape(SV *class, SV* str)
 CODE:
+    PERL_UNUSED_VAR(class);
     STRLEN str_len;
     const char * str_c = SvPV(str, str_len);
     char * buf;
@@ -368,6 +379,7 @@ OUTPUT:
 const char *
 drizzle_version(SV *class)
 CODE:
+    PERL_UNUSED_VAR(class);
     RETVAL = drizzle_version();
 OUTPUT:
     RETVAL
@@ -379,6 +391,7 @@ Net::Drizzle::Connection::new()
 CODE:
     net_con * self;
     Newxz(self, 1, net_con);
+    PERL_UNUSED_VAR(CLASS);
 
     drizzle_st * drizzle;
     if ((drizzle = drizzle_create(NULL)) == NULL) {
@@ -603,6 +616,14 @@ CODE:
 OUTPUT:
     RETVAL
 
+int
+options(net_con* con)
+CODE:
+    drizzle_options_t opt = drizzle_con_options(con->con);
+    RETVAL = opt;
+OUTPUT:
+    RETVAL
+
 SV*
 add_options(SV* self, int opt)
 CODE:
@@ -773,17 +794,10 @@ SV*
 row_next(net_sth *self)
 CODE:
     DEF_RESULT(self);
-    AV * res = newAV();
     drizzle_row_t row = drizzle_row_next(result);
     uint16_t cnt = drizzle_result_column_count(result);
     if (row) {
-        int i;
-        for (i=0; i<cnt; i++) {
-            SV *s = newSVpv(row[i], strlen(row[i]));
-            SvREFCNT_inc_simple_void(s);
-            av_push(res, s);
-        }
-        RETVAL = newRV_noinc((SV*)res);
+        RETVAL = row2arrayref(row, cnt);
     } else {
         RETVAL = &PL_sv_undef;
     }
