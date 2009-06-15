@@ -15,7 +15,7 @@ my $sock = IO::Socket::INET->new(
     Proto     => 'tcp',
     ReuseAddr => 1,
     Listen    => 10,
-) or die;
+) or die $!;
 my $drizzle = Net::Drizzle->new();
 warn "READY TO CONNECT";
 while (1) {
@@ -42,8 +42,8 @@ sub main {
     $con->server_handshake_write();
     $con->client_handshake_read();
 
-    my $res = $con->result_create();
-    $con->result_write($res, true);
+    $con->result_create()
+        ->write(true);
 
     while (1) {
         my ($data, $command, $total, $ret) = $con->command_buffer();
@@ -60,48 +60,39 @@ sub main {
 
         my $res = $con->result_create();
         if ($command != DRIZZLE_COMMAND_QUERY) {
-            $con->result_write($res, true);
+            $res->write(true);
             warn "not a query, skipped, $command";
             next;
         }
-        $res->set_column_count(2);
-        $con->result_write($res, false);
 
-        my $column = $res->column_create()
-                         ->set_catalog("default")
-                         ->set_db("drizzle_test_db")
-                         ->set_table("drizzle_set_table")
-                         ->set_orig_table("drizzle_test_table")
-                         ->set_name("test_column_1")
-                         ->set_orig_name("test_column_1")
-                         ->set_charset(8)
-                         ->set_size($DRIZZLE_FIELD_MAX)
-                         ->set_type(DRIZZLE_COLUMN_TYPE_VARCHAR);
-        warn "COLUMN $column";
-    }
-    $con->serve_it;
-}
+        $res->set_column_count(2)
+            ->write(false);
 
-__END__
+        $res->column_create()
+            ->set_catalog("default")
+            ->set_db("drizzle_test_db")
+            ->set_table("drizzle_set_table")
+            ->set_orig_table("drizzle_test_table")
+            ->set_name("test_column_1")
+            ->set_orig_name("test_column_1")
+            ->set_charset(8)
+            ->set_size($DRIZZLE_FIELD_MAX)
+            ->set_type(DRIZZLE_COLUMN_TYPE_VARCHAR)
+            ->write()
+            ->set_name("test_column_2")
+            ->set_orig_name("test_column_2")
+            ->write();
 
+        $res->set_eof(true)
+            ->write(false);
 
-
-
-
-    while (1) {
-
-        $res->column_write($column);
-        $res->set_eof(1);
-        $con->result_write($res, false);
-
-        for my $x (0..$ROWS) {
+        for my $x (1..$ROWS) {
             my @field = ("field $x-1", "field $x-2");
-            $res->calc_row_size(@field);
-            $res->row_write();
-            $res->field_write($_) for @field;
+            $res->calc_row_size(@field) # This is needed for MySQL and old Drizzle protocol.
+                ->row_write();
+            $res->fields_write(@field);
         }
-        $con->result_write($res, true);
+        $res->write(true);
     }
 }
-
 

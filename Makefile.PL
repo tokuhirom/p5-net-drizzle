@@ -24,7 +24,9 @@ recursive_author_tests('xt');
 
 postamble <<'...';
 Drizzle.xs: Drizzle.xs.tt
-    tpage Drizzle.xs.tt > Drizzle.xs
+	rm -f Drizzle.xs
+	tpage Drizzle.xs.tt > Drizzle.xs
+	chmod 440 Drizzle.xs
 ...
 
 build_requires 'Test::More';

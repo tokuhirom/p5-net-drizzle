@@ -3,6 +3,7 @@ use warnings;
 use Net::Drizzle ':constants';
 
 my $con = Net::Drizzle::Connection->new
+                                  ->set_tcp('127.0.0.1', 9495)
                                   ->add_options(DRIZZLE_CON_MYSQL)
                                   ->set_db("information_schema");
 my $s = $con->query_str("SELECT table_schema,table_name FROM tables");

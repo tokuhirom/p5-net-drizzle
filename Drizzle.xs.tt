@@ -1,3 +1,7 @@
+[% "/* This file is auto generated from Drizzle.xs.tt. Do not modify directly */" %]
+/*
+    vim: ft=xs
+*/
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -30,153 +34,6 @@ typedef struct net_col {
     drizzle_column_st *col;
 } net_col;
 
-#define DRIZZLE_FIELD_MAX 32
-#define DRIZZLE_RESULT_ROWS 20
-
-#define DRIZZLE_RETURN_CHECK(__ret, __function, __drizzle) { \
-  if ((__ret) != DRIZZLE_RETURN_OK) \
-  { \
-    printf(__function ":%s\n", drizzle_error(__drizzle)); \
-    return; \
-  } }
-
-static void server(drizzle_st *drizzle, drizzle_con_st *con,
-                   drizzle_result_st *result, drizzle_column_st *column)
-{
-  drizzle_return_t ret;
-  drizzle_command_t command;
-  uint8_t *data= NULL;
-  size_t total;
-  char *field[2];
-  char field1[DRIZZLE_FIELD_MAX];
-  char field2[DRIZZLE_FIELD_MAX];
-  size_t size[2];
-  uint64_t x;
-
-  field[0]= field1;
-  field[1]= field2;
-
-  /* Handshake packets. */
-  /*
-  drizzle_con_set_protocol_version(con, 10);
-  drizzle_con_set_server_version(con, "libdrizzle example 1.2.3");
-  drizzle_con_set_thread_id(con, 1);
-  drizzle_con_set_scramble(con, (const uint8_t *)"ABCDEFGHIJKLMNOPQRST");
-  drizzle_con_set_capabilities(con, DRIZZLE_CAPABILITIES_NONE);
-  drizzle_con_set_charset(con, 8);
-  drizzle_con_set_status(con, DRIZZLE_CON_STATUS_NONE);
-  drizzle_con_set_max_packet_size(con, DRIZZLE_MAX_PACKET_SIZE);
-
-  ret= drizzle_server_handshake_write(con);
-  DRIZZLE_RETURN_CHECK(ret, "drizzle_server_handshake_write", drizzle)
-
-  ret= drizzle_client_handshake_read(con);
-  DRIZZLE_RETURN_CHECK(ret, "drizzle_client_handshake_read", drizzle)
-
-  if (drizzle_result_create(con, result) == NULL)
-    DRIZZLE_RETURN_CHECK(ret, "drizzle_result_create", drizzle)
-
-  ret= drizzle_result_write(con, result, true);
-  DRIZZLE_RETURN_CHECK(ret, "drizzle_result_write", drizzle)
-  */
-
-  /* Command loop. */
-  while (1)
-  {
-//  drizzle_result_free(result);
-//  if (data != NULL)
-//    free(data);
-
-    data= drizzle_command_buffer(con, &command, &total, &ret);
-    PerlIO_printf(PerlIO_stderr(), "-- %d\n", ret);
-    if (ret == DRIZZLE_RETURN_LOST_CONNECTION ||
-        (ret == DRIZZLE_RETURN_OK && command == DRIZZLE_COMMAND_QUIT))
-    {
-      if (data != NULL)
-        free(data);
-      return;
-    }
-    DRIZZLE_RETURN_CHECK(ret, "drizzle_command_buffer", drizzle)
-
-printf("%u %s\n", command, data == NULL ? "NULL" : (char *)data);
-
-    if (drizzle_result_create(con, result) == NULL)
-      DRIZZLE_RETURN_CHECK(ret, "drizzle_result_create", drizzle)
-
-    if (command != DRIZZLE_COMMAND_QUERY)
-    {
-      ret= drizzle_result_write(con, result, true);
-      DRIZZLE_RETURN_CHECK(ret, "drizzle_result_write", drizzle)
-      continue;
-    }
-
-    drizzle_result_set_column_count(result, 2);
-
-    ret= drizzle_result_write(con, result, false);
-    DRIZZLE_RETURN_CHECK(ret, "drizzle_result_write", drizzle)
-
-    /* Columns. */
-    if (drizzle_column_create(result, column) == NULL)
-      DRIZZLE_RETURN_CHECK(ret, "drizzle_column_create", drizzle)
-
-    drizzle_column_set_catalog(column, "default");
-    drizzle_column_set_db(column, "drizzle_test_db");
-    drizzle_column_set_table(column, "drizzle_test_table");
-    drizzle_column_set_orig_table(column, "drizzle_test_table");
-    drizzle_column_set_name(column, "test_column_1");
-    drizzle_column_set_orig_name(column, "test_column_1");
-    drizzle_column_set_charset(column, 8);
-    drizzle_column_set_size(column, DRIZZLE_FIELD_MAX);
-    drizzle_column_set_type(column, DRIZZLE_COLUMN_TYPE_VARCHAR);
-
-    ret= drizzle_column_write(result, column);
-    DRIZZLE_RETURN_CHECK(ret, "drizzle_column_write", drizzle)
-
-    drizzle_column_set_name(column, "test_column_2");
-    drizzle_column_set_orig_name(column, "test_column_2");
-
-    ret= drizzle_column_write(result, column);
-    DRIZZLE_RETURN_CHECK(ret, "drizzle_column_write", drizzle)
-
-    drizzle_column_free(column);
-
-    drizzle_result_set_eof(result, true);
-
-    ret= drizzle_result_write(con, result, false);
-    DRIZZLE_RETURN_CHECK(ret, "drizzle_result_write", drizzle)
-
-    /* Rows. */
-    for (x= 0; x < DRIZZLE_RESULT_ROWS; x++)
-    {
-      size[0]= snprintf(field[0], DRIZZLE_FIELD_MAX, "field %" PRIu64 "-1", x);
-      if (size[0] >= DRIZZLE_FIELD_MAX)
-        size[0]= DRIZZLE_FIELD_MAX - 1;
-
-      size[1]= snprintf(field[1], DRIZZLE_FIELD_MAX, "field %" PRIu64 "-2", x);
-      if (size[1] >= DRIZZLE_FIELD_MAX)
-        size[1]= DRIZZLE_FIELD_MAX - 1;
-
-      /* This is needed for MySQL and old Drizzle protocol. */
-      drizzle_result_calc_row_size(result, (drizzle_field_t *)field, size);
-
-      ret= drizzle_row_write(result);
-      DRIZZLE_RETURN_CHECK(ret, "drizzle_row_write", drizzle)
-
-      /* Fields. */
-      ret= drizzle_field_write(result, (drizzle_field_t)field[0], size[0],
-                               size[0]);
-      DRIZZLE_RETURN_CHECK(ret, "drizzle_field_write", drizzle)
-
-      ret= drizzle_field_write(result, (drizzle_field_t)field[1], size[1],
-                               size[1]);
-      DRIZZLE_RETURN_CHECK(ret, "drizzle_field_write", drizzle)
-    }
-
-    ret= drizzle_result_write(con, result, true);
-    DRIZZLE_RETURN_CHECK(ret, "drizzle_result_write", drizzle)
-  }
-}
-
 #if 1
 #define LOG(...) PerlIO_printf(PerlIO_stderr(), __VA_ARGS__)
 #else
@@ -186,7 +43,7 @@ printf("%u %s\n", command, data == NULL ? "NULL" : (char *)data);
 #define DEF_RESULT(c) drizzle_result_st *result = (c)->result ? (c)->result : drizzle_query_result((c)->query)
 
 #define XS_STATE(type, x) \
-    INT2PTR(type, SvROK(x) ? SvIV(SvRV(x)) : SvIV(x))
+    (INT2PTR(type, SvROK(x) ? SvIV(SvRV(x)) : SvIV(x)))
 
 #define XS_STRUCT2OBJ(sv, class, obj) \
     if (obj == NULL) { \
@@ -197,6 +54,8 @@ printf("%u %s\n", command, data == NULL ? "NULL" : (char *)data);
 
 
 MODULE = Net::Drizzle  PACKAGE = Net::Drizzle
+
+PROTOTYPES: DISABLE
 
 BOOT:
     HV* stash = gv_stashpvn("Net::Drizzle", strlen("Net::Drizzle"), TRUE);
@@ -526,14 +385,6 @@ CODE:
 OUTPUT:
     RETVAL
 
-void
-serve_it(net_con* con)
-CODE:
-    drizzle_st *drizzle = drizzle_con_drizzle(con->con);
-    drizzle_result_st result;
-    drizzle_column_st column;
-    server(drizzle, con->con, &result, &column);
-
 SV*
 set_db(SV* self, const char *db)
 CODE:
@@ -669,15 +520,6 @@ CODE:
     RETVAL = sth;
 OUTPUT:
     RETVAL
-
-void
-result_write(net_con *con, net_sth *sth, bool flush)
-CODE:
-    drizzle_return_t ret = drizzle_result_write(con->con, sth->result, flush);
-    if (ret != DRIZZLE_RETURN_OK) {
-        drizzle_st *drizzle = drizzle_con_drizzle(con->con);
-        Perl_croak(aTHX_ "drizzle_result_write:%s\n", drizzle_error(drizzle));
-    }
 
 void
 command_buffer(net_con *con)
@@ -881,6 +723,27 @@ CODE:
         Perl_croak(aTHX_ "drizzle_result_buffer:%s\n", drizzle_error(drizzle));
     }
 
+SV *
+set_eof(SV *self_sv, bool eof)
+CODE:
+    net_sth * self_sth = XS_STATE(net_sth *, self_sv);
+    DEF_RESULT(self_sth);
+    drizzle_result_set_eof(result, eof);
+    RETVAL = SvREFCNT_inc_simple(self_sv);
+OUTPUT:
+    RETVAL
+
+SV *
+write(SV *self_sv, bool flush)
+CODE:
+    net_sth * self_sth = XS_STATE(net_sth *, self_sv);
+    DEF_RESULT(self_sth);
+    drizzle_con_st * con = drizzle_result_drizzle_con(result);
+    drizzle_result_write(con, result, flush);
+    RETVAL = SvREFCNT_inc(self_sv);
+OUTPUT:
+    RETVAL
+
 SV*
 row_next(net_sth *self)
 CODE:
@@ -902,11 +765,15 @@ CODE:
 OUTPUT:
     RETVAL
 
-void
-set_column_count(net_sth*self, U16 column_count)
+SV*
+set_column_count(SV*self_sv, U16 column_count)
 CODE:
-    DEF_RESULT(self);
+    net_sth * self_sth = XS_STATE(net_sth*, self_sv);
+    DEF_RESULT(self_sth);
     drizzle_result_set_column_count(result, column_count);
+    RETVAL = SvREFCNT_inc(self_sv);
+OUTPUT:
+    RETVAL
 
 net_col*
 column_create(SV* self_sv)
@@ -931,76 +798,54 @@ OUTPUT:
     RETVAL
 
 SV*
-set_catalog(SV*self, const char*catalog)
+calc_row_size(SV * self, ...)
 CODE:
-    drizzle_column_set_catalog((XS_STATE(net_col*, self))->col, catalog);
-    RETVAL = self;
+    net_sth *sth = XS_STATE(net_sth*, self);
+    DEF_RESULT(sth);
+    int i;
+    size_t *sizes;
+    drizzle_field_t * fields;
+    Newx(sizes,  items-1, size_t);
+    Newx(fields, items-1, drizzle_field_t);
+    for (i=1; i<items; i++) { /* 1 means "skip SV* self" */
+        STRLEN len;
+        fields[i-1] = SvPV(ST(i), len);
+        sizes[i-1]  = len;
+        LOG("%d, %s, %d\n", i-1, fields[i-1], sizes[i-1]);
+    }
+    drizzle_result_calc_row_size(result, fields, sizes);
+    Safefree(sizes);
+    Safefree(fields);
+    RETVAL = SvREFCNT_inc(self);
 OUTPUT:
     RETVAL
 
 SV*
-set_db(SV*self, const char*arg)
+fields_write(SV * self, ...)
 CODE:
-    drizzle_column_set_arg((XS_STATE(net_col*, self))->col, arg);
-    RETVAL = self;
+    net_sth *sth = XS_STATE(net_sth*, self);
+    DEF_RESULT(sth);
+    int i;
+    for (i=1; i<items; i++) { /* 1 means "skip SV* self" */
+        size_t size;
+        drizzle_field_t field;
+        field = SvPV(ST(i), size);
+        drizzle_return_t ret = drizzle_field_write(result, field, size, size);
+        if (ret != DRIZZLE_RETURN_OK) {
+            drizzle_con_st * con = drizzle_result_drizzle_con(result);
+            drizzle_st * drizzle = drizzle_con_drizzle(con);
+            Perl_croak(aTHX_ "drizzle_column_create:%s\n", drizzle_error(drizzle));
+        }
+    }
+    RETVAL = SvREFCNT_inc(self);
 OUTPUT:
     RETVAL
 
-SV*
-set_table(SV*self, const char*arg)
+void
+row_write(net_sth *sth)
 CODE:
-    drizzle_column_set_table((XS_STATE(net_col*, self))->col, arg);
-    RETVAL = self;
-OUTPUT:
-    RETVAL
-
-SV*
-set_orig_table(SV*self, const char*arg)
-CODE:
-    drizzle_column_set_orig_table(XS_STATE(net_col*, self)->col, arg);
-    RETVAL = self;
-OUTPUT:
-    RETVAL
-
-SV*
-set_name(SV*self, const char*arg)
-CODE:
-    drizzle_column_set_name(XS_STATE(net_col*, self)->col, arg);
-    RETVAL = self;
-OUTPUT:
-    RETVAL
-
-SV*
-set_orig_name(SV*self, const char*arg)
-CODE:
-    drizzle_column_set_orig_name(XS_STATE(net_col*, self)->col, arg);
-    RETVAL = self;
-OUTPUT:
-    RETVAL
-
-SV*
-set_charset(SV*self, U8 arg)
-CODE:
-    drizzle_column_set_charset(XS_STATE(net_col*, self)->col, arg);
-    RETVAL = self;
-OUTPUT:
-    RETVAL
-
-SV*
-set_size(SV*self, U32 arg)
-CODE:
-    drizzle_column_set_size(XS_STATE(net_col*, self)->col, arg);
-    RETVAL = self;
-OUTPUT:
-    RETVAL
-
-SV*
-set_type(SV*self, int arg)
-CODE:
-    drizzle_column_set_type(XS_STATE(net_col*, self)->col, arg);
-    RETVAL = self;
-OUTPUT:
-    RETVAL
+    DEF_RESULT(sth);
+    drizzle_row_write(result);
 
 void
 DESTROY(net_sth *self)
@@ -1012,6 +857,73 @@ CODE:
     }
     if (self->con != NULL) {
         SvREFCNT_dec(self->con);
+    }
+    Safefree(self);
+
+MODULE = Net::Drizzle  PACKAGE = Net::Drizzle::Column
+
+[% FOR type IN ['catalog', 'db', 'table', 'orig_table', 'name', 'orig_name'] %]
+SV*
+set_[% type %](SV*self, const char* arg)
+CODE:
+    drizzle_column_set_[% type %]((XS_STATE(net_col*, self))->col, arg);
+    RETVAL = SvREFCNT_inc(self);
+OUTPUT:
+    RETVAL
+[% END %]
+
+SV*
+set_charset(SV*self, U8 arg)
+CODE:
+    drizzle_column_set_charset(XS_STATE(net_col*, self)->col, arg);
+    RETVAL = SvREFCNT_inc(self);
+OUTPUT:
+    RETVAL
+
+SV*
+set_size(SV*self, U32 arg)
+CODE:
+    drizzle_column_set_size(XS_STATE(net_col*, self)->col, arg);
+    RETVAL = SvREFCNT_inc(self);
+OUTPUT:
+    RETVAL
+
+SV*
+set_type(SV*self, int arg)
+CODE:
+    drizzle_column_set_type(XS_STATE(net_col*, self)->col, arg);
+    RETVAL = SvREFCNT_inc(self);
+OUTPUT:
+    RETVAL
+
+SV*
+write(SV * self)
+CODE:
+    net_col *col = XS_STATE(net_col*, self);
+    drizzle_result_st * result = drizzle_column_drizzle_result(col->col);
+    drizzle_return_t ret = drizzle_column_write(result, col->col);
+    if (ret != DRIZZLE_RETURN_OK) {
+        drizzle_con_st * con = drizzle_result_drizzle_con(result);
+        drizzle_st * drizzle = drizzle_con_drizzle(con);
+        Perl_croak(aTHX_ "drizzle_column_write:%s\n", drizzle_error(drizzle));
+    }
+    RETVAL = SvREFCNT_inc(self);
+OUTPUT:
+    RETVAL
+
+void
+DESTROY(net_col *self)
+CODE:
+    LOG("DESTROY column 0x%X\n", (unsigned int)self->drizzle);
+
+    if (self->drizzle != NULL) {
+        SvREFCNT_dec(self->drizzle);
+    }
+    if (self->con != NULL) {
+        SvREFCNT_dec(self->con);
+    }
+    if (self->result != NULL) {
+        SvREFCNT_dec(self->result);
     }
     Safefree(self);
 
