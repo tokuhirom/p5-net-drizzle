@@ -467,15 +467,18 @@ CODE:
         Perl_croak(aTHX_ "drizzle_server_handshake_write:%s\n", drizzle_error(drizzle));
     }
 
-void
+int
 client_handshake_read(SV*self)
 CODE:
     net_con * con = XS_STATE(net_con*, self);
     drizzle_return_t ret = drizzle_client_handshake_read(con->con);
-    if (ret != DRIZZLE_RETURN_OK) {
+    if (ret != DRIZZLE_RETURN_OK && ret != DRIZZLE_RETURN_LOST_CONNECTION) {
         drizzle_st *drizzle = drizzle_con_drizzle(con->con);
         Perl_croak(aTHX_ "drizzle_client_handshake_read:%s\n", drizzle_error(drizzle));
     }
+    RETVAL = ret;
+OUTPUT:
+    RETVAL
 
 SV*
 set_server_version(SV* self, const char* server_version)

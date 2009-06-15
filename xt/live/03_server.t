@@ -45,13 +45,10 @@ sub _server {
     my $drizzle = Net::Drizzle->new();
     while (1) {
         my $csock = $sock->accept or die "cannot accept";
-        eval {
-            my $con = $drizzle->con_create()
-                            ->set_fd($csock->fileno)
-                            ->add_options(Net::Drizzle::DRIZZLE_CON_MYSQL);
-            _handle($con);
-        };
-        warn $@ if $@;
+        my $con = $drizzle->con_create()
+                        ->set_fd($csock->fileno)
+                        ->add_options(Net::Drizzle::DRIZZLE_CON_MYSQL);
+        _handle($con);
     }
 }
 
@@ -69,7 +66,11 @@ sub _handle {
         ->set_max_packet_size(DRIZZLE_MAX_PACKET_SIZE);
 
     $con->server_handshake_write();
-    $con->client_handshake_read();
+    my $ret = $con->client_handshake_read();
+    if ($ret == DRIZZLE_RETURN_LOST_CONNECTION) {
+        # warn "LOST CONNECTION";
+        return;
+    }
 
     $con->result_create()
         ->write(true);

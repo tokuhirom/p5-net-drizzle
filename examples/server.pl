@@ -40,7 +40,11 @@ sub main {
         ->set_max_packet_size(DRIZZLE_MAX_PACKET_SIZE);
 
     $con->server_handshake_write();
-    $con->client_handshake_read();
+    my $ret = $con->client_handshake_read();
+    if ($ret == DRIZZLE_RETURN_LOST_CONNECTION) {
+        warn "LOST CONNECTION";
+        return;
+    }
 
     $con->result_create()
         ->write(true);
