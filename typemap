@@ -3,6 +3,7 @@ drizzle_st*          T_DRIZZLE
 net_con*               T_CON
 net_sth*               T_STH
 net_col*               T_COL
+uint64_t               T_UV
 
 INPUT
 T_CON

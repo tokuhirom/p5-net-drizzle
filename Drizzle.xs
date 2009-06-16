@@ -535,7 +535,6 @@ CODE:
         drizzle_st *drizzle = drizzle_con_drizzle(con->con);
         Perl_croak(aTHX_ "drizzle_result_create:%s\n", drizzle_error(drizzle));
     }
-    printf("%d\n", result->options);
     Newxz(sth, 1, net_sth);
     sth->drizzle = SvREFCNT_inc_simple(con->drizzle);
     sth->result  = result;
@@ -904,6 +903,34 @@ CODE:
     RETVAL = SvREFCNT_inc(self);
 OUTPUT:
     RETVAL
+
+uint64_t
+row_read(net_sth *sth)
+CODE:
+    DEF_RESULT(sth);
+    drizzle_return_t ret;
+    uint64_t cur = drizzle_row_read(result, &ret);
+    if (ret != DRIZZLE_RETURN_OK) {
+        drizzle_con_st * con = drizzle_result_drizzle_con(result);
+        drizzle_st * drizzle = drizzle_con_drizzle(con);
+        Perl_croak(aTHX_ "drizzle_column_create:%s\n", drizzle_error(drizzle));
+    }
+    RETVAL = cur;
+OUTPUT:
+    RETVAL
+
+void
+field_buffer(net_sth *sth)
+PPCODE:
+    /* my ($ret, $field) = $res->field_buffer(); */
+    dTARGET;
+    DEF_RESULT(sth);
+    drizzle_return_t ret;
+    size_t total;
+    drizzle_field_t field = drizzle_field_buffer(result, &total, &ret);
+    XPUSHi(ret);
+    XPUSHs(newSVpv(field, total));
+    XSRETURN(2);
 
 void
 row_write(net_sth *sth)
