@@ -7,7 +7,7 @@ can_cc or die "This module requires a C compiler";
 makemaker_args(
     OBJECT  => '$(O_FILES)',
     LIBS    => '-ldrizzle',
-    CCFLAGS => '-L/tmp/libdrizzle-0.3/.libs -g -Wall -Wextra',
+    CCFLAGS => '-L/tmp/libdrizzle-0.3/.libs -g -Wall -Wextra -std=c99',
     clean   => {
         FILES => q{
             *.stackdump

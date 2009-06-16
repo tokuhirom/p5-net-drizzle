@@ -4,6 +4,9 @@ net_con*               T_CON
 net_sth*               T_STH
 net_col*               T_COL
 uint64_t               T_UV
+uint16_t               T_UV
+drizzle_con_options_t  T_IV
+drizzle_return_t       T_IV
 
 INPUT
 T_CON
