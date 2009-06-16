@@ -14,6 +14,7 @@ ok 1, 'finished 1';
 
 {
     my $con = Net::Drizzle::Connection->new;
+    $con->set_revents(1);
     isa_ok $con, 'Net::Drizzle::Connection';
 }
 ok 2, 'finished 2';

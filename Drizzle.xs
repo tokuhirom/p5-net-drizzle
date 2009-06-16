@@ -11,6 +11,7 @@ extern "C" {
 #include "ppport.h"
 #include <libdrizzle/drizzle_client.h>
 #include <libdrizzle/drizzle_server.h>
+#include <libdrizzle/conn.h>
 #ifdef __cplusplus
 }
 #endif
@@ -498,6 +499,31 @@ SV*
 drizzle(net_con* self)
 CODE:
     RETVAL = SvREFCNT_inc(self->drizzle);
+OUTPUT:
+    RETVAL
+
+int
+connect(net_con* con)
+CODE:
+    drizzle_return_t ret = drizzle_con_connect(con->con);
+    if (ret != DRIZZLE_RETURN_OK) {
+        drizzle_st *drizzle = drizzle_con_drizzle(con->con);
+        Perl_croak(aTHX_ "drizzle_con_connect:%s\n", drizzle_error(drizzle));
+    }
+
+SV*
+set_revents(SV* self, short revents)
+CODE:
+    net_con * con = XS_STATE(net_con*, self);
+
+    if (revents != 0) {
+        con->con->options|= DRIZZLE_CON_IO_READY;
+    }
+
+    con->con->revents= revents;
+    con->con->events&= (short)~revents;
+    /* XXX don't work this : drizzle_con_set_revents(con->con, revents); */
+    RETVAL = SvREFCNT_inc(self);
 OUTPUT:
     RETVAL
 
