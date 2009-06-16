@@ -131,7 +131,6 @@ POE::Component::Client::HTTP->spawn(
 POE::Session->create(
     inline_states => {
         _start => sub {
-        warn "OK";
             DEBUG2("START COUNT STATE");
             $_[KERNEL]->yield( 'get' );
         },
