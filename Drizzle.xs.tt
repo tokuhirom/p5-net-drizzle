@@ -535,7 +535,6 @@ CODE:
         drizzle_st *drizzle = drizzle_con_drizzle(con->con);
         Perl_croak(aTHX_ "drizzle_result_create:%s\n", drizzle_error(drizzle));
     }
-    printf("%d\n", result->options);
     Newxz(sth, 1, net_sth);
     sth->drizzle = SvREFCNT_inc_simple(con->drizzle);
     sth->result  = result;
