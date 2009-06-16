@@ -29,7 +29,6 @@ sub run {
     my $drizzle = Net::Drizzle->new();
     while (1) {
         my $csock = $sock->accept or die "cannot accept";
-        my $pid = fork();
         my $con = $drizzle->con_create()
                         ->set_fd($csock->fileno)
                         ->add_options(Net::Drizzle::DRIZZLE_CON_MYSQL);
