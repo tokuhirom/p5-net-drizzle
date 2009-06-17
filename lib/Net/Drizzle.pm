@@ -354,6 +354,8 @@ kazuhooku(many advice and suggested to write this module)
 
 =head1 SEE ALSO
 
+L<DBD::Drizzle>
+
 =head1 LICENSE
 
 This library is free software; you can redistribute it and/or modify
