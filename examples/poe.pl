@@ -11,12 +11,7 @@ use POE qw(
 use IO::Handle;
 use Carp ();
 use Term::ANSIColor ':constants';
-
-use constant POLLIN        => 1;
-use constant POLLOUT       => 4;
-use constant POLLERR       => 8;
-use constant POLLHUP       => 16;
-use constant POLLNVAL      => 32;
+use IO::Poll qw/POLLIN POLLOUT/;
 
 {
     my $cache = {};
