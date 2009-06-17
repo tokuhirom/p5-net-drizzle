@@ -57,6 +57,7 @@ POE::Session->create(
 
             my $con = $drizzle->con_create()
                               ->add_options(DRIZZLE_CON_MYSQL)
+                              ->set_charset(8)
                               ->set_db('test_net_drizzle_crowler');
             $_[HEAP]->{con} = $con;
         },
@@ -67,7 +68,7 @@ POE::Session->create(
             
             {
                 my $i=0;
-                $query =~ s{\?}{'"'.$drizzle->escape($binds->[$i++]).'"'}eg;
+                $query =~ s{\?}{"'".$drizzle->escape($binds->[$i++])."'"}eg;
             }
             msg("SEND QUERY '$query'");
 
@@ -105,6 +106,9 @@ sub handle_once {
         $container->{con}->set_revents( $mode == 0 ? POLLIN : POLLOUT );
     }
     my ($ret, $query) = $drizzle->query_run();
+    if ($ret != DRIZZLE_RETURN_IO_WAIT && $ret != DRIZZLE_RETURN_OK) {
+        die "query error: " . $drizzle->error(). '('.$drizzle->error_code .')';
+    }
     if ($query) {
         my $result = $query->result;
         $kernel->select_pause_read(fd2fh($container->{con}->fd));

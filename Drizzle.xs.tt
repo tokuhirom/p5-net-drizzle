@@ -40,7 +40,7 @@ typedef struct net_col {
     drizzle_column_st *col;
 } net_col;
 
-#if 0
+#if 1
 #define LOG(...) PerlIO_printf(PerlIO_stderr(), __VA_ARGS__)
 #else
 #define LOG(...)
@@ -468,12 +468,19 @@ CODE:
 OUTPUT:
     RETVAL
 
+int
+error_code(drizzle_st* self)
+CODE:
+    RETVAL=drizzle_error_code(self);
+OUTPUT:
+    RETVAL
+
 void
 query_run(SV* self)
 PPCODE:
     dTARGET;
     drizzle_st *drizzle = XS_STATE(drizzle_st*, self);
-    drizzle_return_t ret;
+    drizzle_return_t ret = 0;
     drizzle_query_st * query = drizzle_query_run(drizzle, &ret);
     if (query) {
         SV * q = _create_query(self, query);
@@ -1212,4 +1219,19 @@ CODE:
     RETVAL = _create_result(query->con, result);
 OUTPUT:
     RETVAL
+
+void
+DESTROY(SV *self_sv)
+CODE:
+    net_query *self = XS_STATE(net_query*, self_sv);
+
+    LOG("DESTROY query 0x%X\n", (unsigned int)self->drizzle);
+
+    if (self->drizzle != NULL) {
+        SvREFCNT_dec(self->drizzle);
+    }
+    if (self->con != NULL) {
+        SvREFCNT_dec(self->con);
+    }
+    Safefree(self);
 
