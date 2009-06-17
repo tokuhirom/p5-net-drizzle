@@ -19,8 +19,8 @@ for (1..$cons) {
     push @sth, $c->query_add($query);
 }
 $dr->query_run_all();
-check_result($s1);
-check_result($_) for @sth;
+check_result($s1->result);
+check_result($_->result) for @sth;
 
 sub check_result {
     my $s = shift;
