@@ -69,8 +69,11 @@ POE::Session->create(
             my ($query, $binds, $callback) = @_[ARG0, ARG1, ARG2];
             my $drizzle = $_[HEAP]->{drizzle};
             my $con     = $_[HEAP]->{con};
-            my $i=0;
-            $query =~ s{\?}{'"'.$drizzle->escape($binds->[$i++]).'"'}eg;
+            
+            {
+                my $i=0;
+                $query =~ s{\?}{'"'.$drizzle->escape($binds->[$i++]).'"'}eg;
+            }
             msg("SEND QUERY '$query'");
 
             my $newcon = $con->clone();
