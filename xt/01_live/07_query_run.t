@@ -18,10 +18,10 @@ for (1..$cons) {
 }
 my $queries = $cons;
 while (1) {
-    my ($query, $ret) = $dr->query_run();
+    my ($ret, $query) = $dr->query_run();
     if ($query) {
         $queries--;
-        is $query->string, 'SELECT table_schema,table_name FROM tables';
+        is $query->string, 'SELECT table_schema,table_name FROM tables', 'query';
         my $result = $query->result;
         check_result($result);
         if ($queries == 0) {

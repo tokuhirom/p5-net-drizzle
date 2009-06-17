@@ -477,11 +477,13 @@ PPCODE:
     drizzle_query_st * query = drizzle_query_run(drizzle, &ret);
     if (query) {
         SV * q = _create_query(self, query);
-        XPUSHs(q);
         XPUSHi(ret);
+        XPUSHs(q);
         XSRETURN(2);
     } else {
-        XSRETURN_UNDEF;
+        XPUSHi(ret);
+        XPUSHs(&PL_sv_undef);
+        XSRETURN(2);
     }
 
 MODULE = Net::Drizzle  PACKAGE = Net::Drizzle::Connection

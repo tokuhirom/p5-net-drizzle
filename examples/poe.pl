@@ -12,12 +12,6 @@ use IO::Handle;
 use Carp ();
 use Term::ANSIColor ':constants';
 
-use constant  {
-    CLIENT_QUERY  => 1,
-    CLIENT_FIELDS => 2,
-};
-
-
 use constant POLLIN        => 1;
 use constant POLLOUT       => 4;
 use constant POLLERR       => 8;
@@ -83,12 +77,17 @@ POE::Session->create(
             my $container = {
                 query    => $query,
                 con      => $newcon,
-                state    => CLIENT_QUERY,
                 sender   => $_[SENDER]->ID,
                 callback => $callback,
             };
             $newcon->set_data($container);
-            client_process($container); # attameru
+            $newcon->query_add($container->{query});
+            while (1) {
+                my $ret = handle_once($_[KERNEL], $_[HEAP]->{drizzle}, $container, undef);
+                if ($ret == DRIZZLE_RETURN_IO_WAIT) {
+                    last;
+                }
+            }
             $_[KERNEL]->select(fd2fh($newcon->fd), 'handle_select', 'handle_select', undef, $container);
         },
         handle_select => sub {
@@ -97,29 +96,33 @@ POE::Session->create(
             return unless defined $container->{con};
 
             DEBUG("handle_select $mode, $container");
-            my $drizzle = $_[HEAP]->{drizzle};
-            $container->{con}->set_revents( $mode == 0 ? POLLIN : POLLOUT );
-            while (my $con = $drizzle->con_ready()) {
-                DEBUG("CON_READY --");
-                my $container = $con->data;
-                DEBUG("MISSING CONTAINER: $con") unless $container;
-                if (client_process($container) == 0) {
-                    # succeeded
-                    $_[KERNEL]->select_pause_read(fd2fh($container->{con}->fd));
-                    $_[KERNEL]->select_pause_write(fd2fh($container->{con}->fd));
-                    my ($callback, $sender) = ($container->{callback}, $container->{sender});
-                    if (defined $callback) {
-                        DEBUG2("CALLBACK TO $callback, $sender");
-                        $_[KERNEL]->post($sender, $callback, $container->{result});
-                    }
-                    undef $container->{con};
-                    undef $container;
-                    msg("finished query !!");
-                }
-            }
+            handle_once($_[KERNEL], $_[HEAP]->{drizzle}, $container, $mode);
         },
     },
 );
+
+sub handle_once {
+    my ($kernel, $drizzle, $container, $mode) = @_;
+
+    if (defined $mode) {
+        $container->{con}->set_revents( $mode == 0 ? POLLIN : POLLOUT );
+    }
+    my ($ret, $query) = $drizzle->query_run();
+    if ($query) {
+        my $result = $query->result;
+        $kernel->select_pause_read(fd2fh($container->{con}->fd));
+        $kernel->select_pause_write(fd2fh($container->{con}->fd));
+        my ($callback, $sender) = ($container->{callback}, $container->{sender});
+        if (defined $callback) {
+            DEBUG2("CALLBACK TO $callback, $sender");
+            $kernel->post($sender, $callback, $query->result);
+        }
+        undef $container->{con};
+        undef $container;
+        msg("finished query !!");
+    }
+    return $ret;
+}
 
 POE::Component::Client::HTTP->spawn(
     Agent           => 'Net::Drizzle/ExampleScript',
@@ -170,49 +173,3 @@ POE::Session->create(
 
 POE::Kernel->run;
 
-sub client_process {
-    my $container = shift;
-    die "oops? invalid container: $container" unless ref $container;
-    my $func = +{
-        CLIENT_QUERY()  => 'client_query',
-        CLIENT_FIELDS() => 'client_fields',
-    }->{$container->{state}};
-    no strict 'refs';
-    my $code = *{$func} or die "missing func? $func";
-    $code->($container);
-}
-
-sub client_query {
-    my $container = shift;
-    my ($ret, $result) = $container->{con}->query($container->{query});
-    $container->{result} = $result;
-    if ($ret == DRIZZLE_RETURN_IO_WAIT) {
-        DEBUG("IO_WAIT");
-        return 1;
-    } elsif ($ret != DRIZZLE_RETURN_OK) {
-        die "error occured at drizzle_query: $ret, ".$container->{con}->drizzle->error;
-    }
-
-    if ($result->column_count != 0) {
-        DEBUG("HAS FIELDS");
-        $container->{state} = CLIENT_FIELDS;
-        return client_fields($container);
-    } else {
-        return 0;
-    }
-}
-
-sub client_fields {
-    my $container = shift;
-    DEBUG("CLIENT_FIELDS");
-    my $result = $container->{result};
-    my $ret = $result->buffer;
-    if ($ret == DRIZZLE_RETURN_IO_WAIT) {
-        DEBUG("IO_WAIT");
-        return 1;
-    } elsif ($ret != DRIZZLE_RETURN_OK) {
-        die "error occured at drizzle_query: $ret";
-    }
-
-    return 0;
-}
