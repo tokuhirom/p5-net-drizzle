@@ -77,14 +77,13 @@ POE::Session->create(
             msg("SEND QUERY '$query'");
 
             my $newcon = $con->clone();
+               $newcon->query_add($query);
+
             my $container = {
-                query    => $query,
                 con      => $newcon,
                 sender   => $_[SENDER]->ID,
                 callback => $callback,
             };
-            $newcon->set_data($container);
-            $newcon->query_add($container->{query});
             while (1) {
                 my $ret = handle_once($_[KERNEL], $_[HEAP]->{drizzle}, $container, undef);
                 if ($ret == DRIZZLE_RETURN_IO_WAIT) {
