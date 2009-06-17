@@ -348,6 +348,10 @@ This is a simple benchmark result of Net::Drizzle(by benchmark/simple.pl).
 
 Tokuhiro Matsuno E<lt>tokuhirom @*(#RJKLFHFSDLJF gmail.comE<gt>
 
+=head1 THANKS TO
+
+kazuhooku(many advice and suggested to write this module)
+
 =head1 SEE ALSO
 
 =head1 LICENSE
