@@ -268,6 +268,7 @@ BEGIN {
     use Exporter 'import';
 };
 use Net::Drizzle::Result;
+use Net::Drizzle::Connection;
 
 1;
 __END__

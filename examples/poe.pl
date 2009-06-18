@@ -13,19 +13,6 @@ use Carp ();
 use Term::ANSIColor ':constants';
 use IO::Poll qw/POLLIN POLLOUT/;
 
-{
-    my $cache = {};
-    sub fd2fh {
-        my $fd = shift;
-        Carp::confess("invalid fd $fd") if $fd < 0;
-        $cache->{$fd} ||= do {
-            my $fh = IO::Handle->new;
-            $fh->fdopen($fd, 'w+');
-            $fh;
-        };
-    }
-}
-
 =pod
 
 please run the following queries before run this script.
@@ -86,7 +73,7 @@ POE::Session->create(
                     last;
                 }
             }
-            $_[KERNEL]->select(fd2fh($newcon->fd), 'handle_select', 'handle_select', undef, $container);
+            $_[KERNEL]->select($newcon->fh, 'handle_select', 'handle_select', undef, $container);
         },
         handle_select => sub {
             my ($mode, $container) = ($_[ARG1], $_[ARG2]);
@@ -111,8 +98,8 @@ sub handle_once {
     }
     if ($query) {
         my $result = $query->result;
-        $kernel->select_pause_read(fd2fh($container->{con}->fd));
-        $kernel->select_pause_write(fd2fh($container->{con}->fd));
+        $kernel->select_pause_read($container->{con}->fh);
+        $kernel->select_pause_write($container->{con}->fh);
         my ($callback, $sender) = ($container->{callback}, $container->{sender});
         if (defined $callback) {
             DEBUG2("CALLBACK TO $callback, $sender");
