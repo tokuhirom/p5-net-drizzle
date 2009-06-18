@@ -10,25 +10,38 @@ my $query = "SELECT table_schema,table_name FROM tables";
 
 my $dr = Net::Drizzle->new
                      ->add_options(DRIZZLE_NON_BLOCKING);
-my $c1 = $dr->con_create
-            ->add_options(DRIZZLE_CON_MYSQL)
-            ->set_db("information_schema");
-for (1..$cons) {
-    $c1->clone->query_add($query);
-}
-my $queries = $cons;
-while (1) {
-    my ($ret, $query) = $dr->query_run();
-    if ($query) {
-        $queries--;
-        is $query->string, 'SELECT table_schema,table_name FROM tables', 'query';
-        my $result = $query->result;
-        check_result($result);
-        if ($queries == 0) {
-            last;
-        }
+
+setup($dr);
+aggregate($dr);
+
+sub setup {
+    my $dr = shift;
+
+    my $c1 = $dr->con_create
+                ->add_options(DRIZZLE_CON_MYSQL)
+                ->set_db("information_schema");
+    for (1..$cons) {
+        $c1->clone->query_add($query);
     }
-    $dr->con_wait();
+}
+
+sub aggregate {
+    my $dr = shift;
+
+    my $queries = $cons;
+    while (1) {
+        my ($ret, $query) = $dr->query_run();
+        if ($query) {
+            $queries--;
+            is $query->string, 'SELECT table_schema,table_name FROM tables', 'query';
+            my $result = $query->result;
+            check_result($result);
+            if ($queries == 0) {
+                last;
+            }
+        }
+        $dr->con_wait();
+    }
 }
 
 sub check_result {
