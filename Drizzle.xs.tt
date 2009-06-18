@@ -428,7 +428,9 @@ CODE:
     char * buf;
     Newxz(buf, str_len*2+1, char);
     uint64_t dst_len = drizzle_escape_string(buf, str_c, str_len);
-    RETVAL = newSVpvn(buf, dst_len);
+    SV * res = newSVpvn(buf, dst_len);
+    Safefree(buf);
+    RETVAL = res;
 OUTPUT:
     RETVAL
 
