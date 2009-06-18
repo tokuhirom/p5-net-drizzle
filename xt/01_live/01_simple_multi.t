@@ -15,7 +15,6 @@ my $c1 = $dr->con_create
             ->set_db("information_schema");
 my $s1 = $c1->query_add($query);
 for (1..$cons) {
-warn "CLONING";
     push @sth, $c1->clone->query_add($query);
 }
 $dr->query_run_all();

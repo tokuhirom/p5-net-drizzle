@@ -2,26 +2,31 @@ use strict;
 use warnings;
 use Test::More;
 use Net::Drizzle ':constants';
+use Devel::Peek;
 
 my $cons = 10;
 plan tests => ($cons) * 5;
 
-my $query = "SELECT table_schema,table_name FROM tables";
+&main;exit;
 
-my $dr = Net::Drizzle->new
-                     ->add_options(DRIZZLE_NON_BLOCKING);
+sub main {
+    my $dr = Net::Drizzle->new
+                        ->add_options(DRIZZLE_NON_BLOCKING);
 
-setup($dr);
-aggregate($dr);
+    printf "%X\n", $$dr;
+    setup($dr);
+    aggregate($dr);
+}
 
 sub setup {
     my $dr = shift;
 
+    my $query = "SELECT table_schema,table_name FROM tables";
     my $c1 = $dr->con_create
                 ->add_options(DRIZZLE_CON_MYSQL)
                 ->set_db("information_schema");
     for (1..$cons) {
-        $c1->clone->query_add($query);
+        my $q = $c1->clone->query_add($query);
     }
 }
 
@@ -37,7 +42,7 @@ sub aggregate {
             my $result = $query->result;
             check_result($result);
             if ($queries == 0) {
-                last;
+                return;
             }
         }
         $dr->con_wait();

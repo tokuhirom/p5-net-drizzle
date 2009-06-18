@@ -30,6 +30,7 @@ typedef struct net_con {
 typedef struct net_result {
     SV * drizzle;
     SV * con;
+    SV * query;
     drizzle_result_st *result;
 } net_result;
 
@@ -40,7 +41,7 @@ typedef struct net_col {
     drizzle_column_st *col;
 } net_col;
 
-#if 1
+#if 0
 #define LOG(...) PerlIO_printf(PerlIO_stderr(), __VA_ARGS__)
 #else
 #define LOG(...)
@@ -69,18 +70,36 @@ SV *_bless(const char *class, void *obj) {
 SV* _create_drizzle() {
     drizzle_st * self;
     Newxz(self, 1, drizzle_st);
-    LOG("CREATE DRIZZLE\n");
     if (drizzle_create(self) == NULL) {
         Perl_croak(aTHX_ "drizzle_create:NULL\n"); /* should not reache here */
     }
-    return _bless("Net::Drizzle", self);
+    SV * ret = _bless("Net::Drizzle", self);
+    LOG("CREATE drizzle 0x%X\n", (unsigned int)ret);
+    return ret;
 }
 
-SV * _create_result(SV* con_sv, drizzle_result_st* result_raw) {
+SV * _create_result(SV* con_sv, SV *query_sv, drizzle_result_st* result_raw) {
     net_result * result;
     Newxz(result, 1, net_result);
-    result->drizzle = SvREFCNT_inc_simple(XS_STATE(net_con*, con_sv)->drizzle);
-    result->con     = SvREFCNT_inc_simple(con_sv);
+    if (con_sv) {
+        result->drizzle = SvREFCNT_inc_simple(XS_STATE(net_con*, con_sv)->drizzle);
+    } else if (query_sv) {
+        result->drizzle   = SvREFCNT_inc_simple(XS_STATE(net_query*, query_sv)->drizzle);
+    } else {
+        Perl_croak(aTHX_ "should not reach here");
+    }
+
+    if (con_sv) {
+        result->con     = SvREFCNT_inc_simple(con_sv);
+    } else {
+        result->con     = NULL;
+    }
+    if (query_sv) {
+        result->query     = SvREFCNT_inc_simple(query_sv);
+    } else {
+        result->query   = NULL;
+    }
+
     result->result  = result_raw;
     return _bless("Net::Drizzle::Result", result);
 }
@@ -99,17 +118,23 @@ net_col * _create_col(SV* result_sv, drizzle_column_st* col_raw) {
 SV * _create_con(SV* drizzle_sv, drizzle_con_st *con_raw) {
     net_con *con;
     Newxz(con, 1, net_con);
-    LOG("CREATE connection drizzle=0x%X\n", (unsigned int)GET_DRIZZLE(drizzle_sv));
+    LOG("CREATE connection drizzle=0x%X, drizzle_refcnt=%d\n", (unsigned int)drizzle_sv, (int)SvREFCNT(drizzle_sv));
     con->drizzle = SvREFCNT_inc_simple(drizzle_sv);
     con->con     = con_raw;
     return _bless("Net::Drizzle::Connection", con);
 }
 
-SV * _create_query(SV* drizzle_sv, drizzle_query_st *query_raw) {
+SV * _create_query(SV* drizzle_sv, SV *con_sv, drizzle_query_st *query_raw) {
+    LOG("CREATE query 0x%X, drizzle_refcnt=%d\n", (unsigned int)drizzle_sv, (int)SvREFCNT(drizzle_sv));
+
     net_query *query;
     Newxz(query, 1, net_query);
-    query->drizzle = SvREFCNT_inc_simple(drizzle_sv);
-    query->con     = SvREFCNT_inc_simple(_create_con(drizzle_sv, drizzle_query_con(query_raw)));
+    query->drizzle = SvREFCNT_inc(drizzle_sv);
+    if (con_sv != NULL) {
+        query->con     = SvREFCNT_inc(con_sv);
+    } else {
+        query->con     = NULL;
+    }
     query->query     = query_raw;
     return _bless("Net::Drizzle::Query", query);
 }
@@ -408,7 +433,7 @@ OUTPUT:
 void
 DESTROY(SV* _self)
 CODE:
-    LOG("DESTROY drizzle 0x%X\n", (unsigned int)_self);
+    LOG("DESTROY drizzle 0x%X, drizzle->refcnt=%d\n", (unsigned int)_self, (int)SvREFCNT(_self));
     drizzle_st *drizzle = GET_DRIZZLE(_self);
     drizzle_free(drizzle);
     Safefree(drizzle);
@@ -497,9 +522,9 @@ PPCODE:
     drizzle_return_t ret = 0;
     drizzle_query_st * query = drizzle_query_run(drizzle, &ret);
     if (query) {
-        SV * q = _create_query(self, query);
+        SV * q = _create_query(self, NULL, query);
         XPUSHi(ret);
-        XPUSHs(q);
+        mXPUSHs(q);
         XSRETURN(2);
     } else {
         XPUSHi(ret);
@@ -535,7 +560,7 @@ PPCODE:
     drizzle_result_st *result = drizzle_query(con->con, NULL, query_c, query_len, &ret);
 
     XPUSHi(ret);
-    XPUSHs(_create_result(self, result));
+    mXPUSHs(_create_result(self, NULL, result));
     XSRETURN(2);
 
 SV*
@@ -717,7 +742,7 @@ CODE:
         drizzle_st *drizzle = drizzle_con_drizzle(con->con);
         Perl_croak(aTHX_ "drizzle_result_create:%s\n", drizzle_error(drizzle));
     }
-    RETVAL = _create_result(_self, result);
+    RETVAL = _create_result(_self, NULL, result);
 OUTPUT:
     RETVAL
 
@@ -816,7 +841,6 @@ CODE:
     if ((newcon = drizzle_con_clone(GET_DRIZZLE(self->drizzle), NULL, self->con)) == NULL) {
         Perl_croak(aTHX_ "drizzle_con_clone:%s\n", drizzle_error(GET_DRIZZLE(self->drizzle)));
     }
-    LOG("%X\n", self->drizzle);
     RETVAL = _create_con(self->drizzle, newcon);
 OUTPUT:
     RETVAL
@@ -828,13 +852,12 @@ CODE:
     drizzle_st * drizzle = XS_STATE(drizzle_st*, self->drizzle);
     size_t query_len;
     const char* query_c = SvPV(query, query_len);
-    LOG("CREATE query 0x%X\n", (unsigned int)self->drizzle);
     drizzle_query_st *query_d;
     if ((query_d = drizzle_query_add(drizzle, NULL, self->con, NULL, query_c,
                               query_len, (drizzle_query_options_t)0, NULL)) == NULL) {
          Perl_croak(aTHX_ "drizzle_query_add:%s\n", drizzle_error(drizzle));
     }
-    RETVAL = _create_query(_self, query_d);
+    RETVAL = _create_query(self->drizzle, _self, query_d);
 OUTPUT:
     RETVAL
 
@@ -842,7 +865,7 @@ SV*
 query_str(SV *_self, const char*query)
 CODE:
     net_con * self = XS_STATE(net_con*, _self);
-    LOG("CREATE query_result 0x%X\n", (unsigned int)self->drizzle);
+    LOG("CREATE result 0x%X\n", (unsigned int)self->drizzle);
 
     drizzle_return_t ret;
     drizzle_result_st *result = drizzle_query_str(self->con, NULL, query, &ret);
@@ -850,7 +873,7 @@ CODE:
         drizzle_st * drizzle = XS_STATE(drizzle_st*, self->drizzle);
         Perl_croak(aTHX_ "drizzle_query_str:%s\n", drizzle_error(drizzle));
     }
-    RETVAL= _create_result(_self, result);
+    RETVAL= _create_result(_self, NULL, result);
 OUTPUT:
     RETVAL
 
@@ -1117,12 +1140,11 @@ void
 field_buffer(net_result *result)
 PPCODE:
     /* my ($ret, $field) = $res->field_buffer(); */
-    dTARGET;
     drizzle_return_t ret;
     size_t total;
     drizzle_field_t field = drizzle_field_buffer(result->result, &total, &ret);
-    XPUSHi(ret);
-    XPUSHs(newSVpv(field, total));
+    mXPUSHi(ret);
+    mXPUSHs(newSVpv(field, total));
     XSRETURN(2);
 
 void
@@ -1133,13 +1155,16 @@ CODE:
 void
 DESTROY(net_result *self)
 CODE:
-    LOG("DESTROY result 0x%X\n", (unsigned int)self->drizzle);
+    LOG("DESTROY result 0x%X, drizzle->refcnt=%d\n", (unsigned int)self->drizzle, (int)SvREFCNT(self->drizzle));
 
     if (self->drizzle != NULL) {
         SvREFCNT_dec(self->drizzle);
     }
     if (self->con != NULL) {
         SvREFCNT_dec(self->con);
+    }
+    if (self->query != NULL) {
+        SvREFCNT_dec(self->query);
     }
     Safefree(self);
 
@@ -1342,7 +1367,7 @@ PPCODE:
     net_query *query = XS_STATE(net_query*, self);
     size_t size;
     const char * str = drizzle_query_string(query->query, &size);
-    XPUSHs(newSVpvn(str, size));
+    mXPUSHs(newSVpvn(str, size));
     XSRETURN(1);
 
 SV*
@@ -1350,7 +1375,7 @@ result(SV*self)
 CODE:
     net_query *query = XS_STATE(net_query*, self);
     drizzle_result_st *result = drizzle_query_result(query->query);
-    RETVAL = _create_result(query->con, result);
+    RETVAL = _create_result(query->con, self, result);
 OUTPUT:
     RETVAL
 
@@ -1359,7 +1384,7 @@ DESTROY(SV *self_sv)
 CODE:
     net_query *self = XS_STATE(net_query*, self_sv);
 
-    LOG("DESTROY query 0x%X\n", (unsigned int)self->drizzle);
+    LOG("DESTROY query 0x%X, drizzle->refcnt=%d\n", (unsigned int)self->drizzle, (int)SvREFCNT(self->drizzle));
 
     if (self->drizzle != NULL) {
         SvREFCNT_dec(self->drizzle);
