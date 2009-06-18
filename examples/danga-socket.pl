@@ -8,8 +8,6 @@ use IO::Handle;
 use Net::Drizzle ':constants';
 use Term::ANSIColor ':constants';
 
-die "THIS SCRIPT DOES NOT WORKS YET";
-
 my $port = 9429;
 my $ssock = IO::Socket::INET->new(
     LocalPort => $port,
@@ -46,85 +44,39 @@ Danga::Socket->AddOtherFds(
     }
 );
 
-=pod
-                OreOre::Danga::Socket::Drizzle->new(
-                    con     => $con->clone(),
-                    query   => 'SELECT COUNT(*) FROM entry',
-                    callback => sub {
-                        my $result = shift;
-                        my $count = $result->row_next->[0];
-                        print BLUE, "current rows: $count\n", RESET;
-                    },
-                );
-=cut
+&run_timer;
 
-{
-    my $nc = $con->clone();
-    my $q = $nc->query_add('SELECT COUNT(*) FROM entry');
-    use IO::Poll qw/POLLIN POLLOUT/;
-    while (1) {
-        $con->drizzle->con_wait;
-        # $nc->set_revents( POLLIN|POLLOUT );
-        my ($ret, $query) = $drizzle->query_run;
-        warn $ret;
-        if ($query) {
-            warn $query->result->row_next->[0];
-            last;
-        }
-    }
-}
+print "ready to connect\n";
+Danga::Socket->EventLoop();
+exit; # should not reach here
 
-=pod
-{
-    my $nc = $con->clone;
-    my $sql = 'SELECT COUNT(*) FROM entry';
-    $nc->set_data({
-        callback => sub {
-            my $result = shift;
-            warn("finished\n");
-            warn $result->row_next->[0];
-            $nc->close();
-            undef $nc;
-        }
-    });
-    $nc->query_add($sql);
-    my ($ret, $query) = $drizzle->query_run;
-    if ($query) {
-    }
-    warn $ret;
-    warn $nc->fd;
-    Danga::Socket->AddOtherFds(
-        $nc->fd() => sub {
-            $drizzle->con_wait;
-            my ($ret, $query) = $drizzle->query_run;
-            if ($query) {
-                $query->con->data->{callback}->($query->result);
-            }
+sub run_timer {
+    return;
+
+    Danga::Socket->AddTimer(
+        1 => sub {
+            print "awake by timer\n";
+            my $sql = 'SELECT COUNT(*) FROM echo;';
+            my $nc = $con->clone;
+            $nc->query_add($sql);
+            OreOre::Danga::Socket::Drizzle->new(
+                con => $nc,
+                query => $sql,
+                callback => sub {
+                    my $result = shift;
+                    print BLUE, "Count of rows : " . $result->row_next->[0] . "\n", RESET;
+                },
+            );
+            &run_timer;
         }
     );
 }
-=cut
-#       my $nnc = $con->clone;
-#       OreOre::Danga::Socket::Drizzle->new(
-#           con     => $nnc,
-#           query   => $sql,
-#           callback => sub {
-#               my $result = shift;
-#               warn "FINISHED";
-#               warn "CLOSE";
-#               # warn $self->close();
-#               # my $count = $result->row_next->[0];
-#               # print BLUE, "current rows: $count\n", RESET;
-#           },
-#       );
-
-warn "ready to connect";
-Danga::Socket->EventLoop();
 
 {
     package OreOre::Danga::Socket::Admin;
     use base 'Danga::Socket';
     use fields 'buffer';
+    use Term::ANSIColor ':constants';
 
     sub new {
         my ($class, $sock) = @_;
@@ -136,58 +88,30 @@ Danga::Socket->EventLoop();
 
     sub event_read {
         my $self = shift;
-        warn "EVENT READ";
         my $dat = $self->read(20_000);
         return $self->close unless defined $dat;
+
         $self->{buffer} .= $$dat;
         while ($self->{buffer} =~ s/^(.*?)\r?\n//) {
-            $self->_insert($1);
+            $self->_insert($1) if $1;
         }
     }
 
     sub _insert {
         my ($self, $dat) = @_;
 
-#       # my $sql = 'INSERT INTO echo (message) values ("'.$drizzle->escape($dat).'")';
-        my $sql = 'SELECT COUNT(*) FROM entry';
-#       my $nc = $con->clone();
-#       $nc->set_data({
-#           callback => sub {
-#               $self->write("finished\n");
-#               $nc->close();
-#               undef $nc;
-#           }
-#       });
-#       $nc->query_add($sql);
-#       my ($ret, $query) = $drizzle->query_run;
-#       if ($query) {
-#                   $query->con->data->{callback}->($query->result);
-#       }
-#       warn "SEND QUERY $sql";
-#       Danga::Socket->AddOtherFds(
-#           $nc->fd() => sub {
-#               warn "WAIT!";
-#               $drizzle->con_wait;
-#               my ($ret, $query) = $drizzle->query_run;
-#               warn $ret;
-#               $self->write("HO $ret\n");
-#               if ($query) {
-#                   $query->con->data->{callback}->($query->result);
-#               }
-#           }
-#       );
+        my $sql = 'INSERT INTO echo (message) values ("'.$drizzle->escape($dat).'")';
         my $nc = $con->clone;
         $nc->query_add($sql);
-        my $d = OreOre::Danga::Socket::Drizzle->new(
+        OreOre::Danga::Socket::Drizzle->new(
             con => $nc,
             query => $sql,
             callback => sub {
-                die "CALLBACK";
+                my $result = shift;
+                print BLUE, "CALLBACK\n", RESET;
+                $self->write("finished\n");
             },
         );
-        warn "BEFORE SOON";
-        $d->_soon();
-        warn "i can reach here";
     }
 }
 
@@ -202,23 +126,13 @@ Danga::Socket->EventLoop();
     use IO::Handle;
     use Term::ANSIColor ':constants';
 
-my $foo;
     sub new {
         my OreOre::Danga::Socket::Drizzle $self = shift;
-        warn "INITIALIZING";
         my %args = @_;
         $self = fields::new($self) unless ref $self;
         $self->{con} = $args{con};
-        warn $self->{con};
-        printf STDERR "CON: 0x%X\n", ${$self->{con}};
         $self->{callback} = $args{callback};
 
-        # my $query = $args{con}->query_add($args{query});
-        # $foo->{query} = $query;
-        # $foo->{res} = $query->result;
-        $foo->{con} = $con;
-        $foo->{fh} = $self->{con}->fh;
-        # warn "RUN $args{query}";
         while (1) {
             my $ret = $self->handle_once(undef);
             if ($ret == DRIZZLE_RETURN_IO_WAIT) {
@@ -237,35 +151,29 @@ my $foo;
 
     sub event_read {
         my $self = shift;
-        warn YELLOW, "EVENT READ", RESET;
+        print YELLOW, "EVENT READ\n", RESET;
 
-        $self->_soon();
-
-        $self->handle_once(POLLOUT);
+        $self->handle_once(POLLIN);
     }
 
     sub event_write {
         my $self = shift;
 
-        $self->_soon();
-
-        $self->handle_once(POLLIN);
+        $self->handle_once(POLLOUT);
     }
 
     sub handle_once {
         my ($self, $mode) = @_;
 
-
-        $drizzle->con_wait;
         if (defined $mode) {
-        #   $self->{con}->set_revents( POLLIN|POLLOUT );
+            $self->{con}->set_revents( POLLIN|POLLOUT );
         }
+        my $drizzle = $self->{con}->drizzle;
         my ($ret, $query) = $drizzle->query_run();
         if ($ret != DRIZZLE_RETURN_IO_WAIT && $ret != DRIZZLE_RETURN_OK) {
             die "query error: " . $drizzle->error(). '('.$drizzle->error_code .')';
         }
         if ($query) {
-            warn "OK";
             my $result = $query->result;
             $self->close();
             my $callback = $self->{callback};
@@ -275,22 +183,6 @@ my $foo;
             main::msg("finished query !!");
         }
         return $ret;
-    }
-
-    sub _soon {
-        while (1) {
-            my ($ret, $query) = $drizzle->query_run;
-            $drizzle->con_wait;
-            # $nc->set_revents( POLLIN|POLLOUT );
-            warn $ret if $ret;
-            warn RED, "PARSE ERR!", RESET if $ret==17;
-            warn '.';
-            if ($query) {
-                warn BLUE, $query->result->row_next->[0], RESET;
-                die;
-                last;
-            }
-        }
     }
 }
 
