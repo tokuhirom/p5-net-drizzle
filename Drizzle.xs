@@ -63,6 +63,14 @@ SV *_bless(const char *class, void *obj) {
     return ret;
 }
 
+SV* _create_drizzle() {
+    drizzle_st * self;
+    if ((self = drizzle_create(NULL)) == NULL) {
+        Perl_croak(aTHX_ "drizzle_create:NULL\n");
+    }
+    return _bless("Net::Drizzle", self);
+}
+
 SV * _create_result(SV* con_sv, drizzle_result_st* result_raw) {
     net_result * result;
     Newxz(result, 1, net_result);
@@ -358,14 +366,11 @@ BOOT:
     newCONSTSUB(stash, "DRIZZLE_COLUMN_FLAGS_IN_ADD_INDEX", newSViv(DRIZZLE_COLUMN_FLAGS_IN_ADD_INDEX));
     newCONSTSUB(stash, "DRIZZLE_COLUMN_FLAGS_RENAMED", newSViv(DRIZZLE_COLUMN_FLAGS_RENAMED));
 
-drizzle_st*
+SV*
 Net::Drizzle::new()
 CODE:
-    drizzle_st * self;
-    if ((self = drizzle_create(NULL)) == NULL) {
-        Perl_croak(aTHX_ "drizzle_create:NULL\n");
-    }
-    RETVAL = self;
+    PERL_UNUSED_VAR(CLASS);
+    RETVAL = _create_drizzle();
 OUTPUT:
     RETVAL
 
@@ -495,25 +500,18 @@ PPCODE:
 
 MODULE = Net::Drizzle  PACKAGE = Net::Drizzle::Connection
 
-net_con*
+SV*
 Net::Drizzle::Connection::new()
 CODE:
-    net_con * self;
-    Newxz(self, 1, net_con);
     PERL_UNUSED_VAR(CLASS);
 
-    drizzle_st * drizzle;
-    if ((drizzle = drizzle_create(NULL)) == NULL) {
-        Perl_croak(aTHX_ "drizzle_create:NULL\n");
-    }
-    if ((self->con = drizzle_con_create(drizzle, NULL)) == NULL) {
+    drizzle_con_st * con;
+    SV * drizzle = _create_drizzle();
+    if ((con = drizzle_con_create(XS_STATE(drizzle_st*, drizzle), NULL)) == NULL) {
         Perl_croak(aTHX_ "drizzle_con_create:NULL\n");
     }
 
-	SV * ret = newSViv(0);
-    XS_STRUCT2OBJ(ret, "Net::Drizzle", drizzle);
-    self->drizzle = ret;
-    RETVAL = self;
+    RETVAL = _create_con(drizzle, con);
 OUTPUT:
     RETVAL
 
