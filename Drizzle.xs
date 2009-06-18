@@ -56,6 +56,9 @@ typedef struct net_col {
         sv_setref_pv(sv, class, (void *) obj); \
     }
 
+#define GET_DRIZZLE(x) \
+            XS_STATE(drizzle_st*, (x))
+
 inline
 SV *_bless(const char *class, void *obj) {
     SV * ret = newSViv(0);
@@ -65,8 +68,9 @@ SV *_bless(const char *class, void *obj) {
 
 SV* _create_drizzle() {
     drizzle_st * self;
-    if ((self = drizzle_create(NULL)) == NULL) {
-        Perl_croak(aTHX_ "drizzle_create:NULL\n");
+    Newxz(self, 1, drizzle_st);
+    if (drizzle_create(self) == NULL) {
+        Perl_croak(aTHX_ "drizzle_create:NULL\n"); /* should not reache here */
     }
     return _bless("Net::Drizzle", self);
 }
@@ -377,7 +381,7 @@ OUTPUT:
 SV*
 con_create(SV *self)
 CODE:
-    drizzle_st * drizzle = XS_STATE(drizzle_st*, self);
+    drizzle_st * drizzle = GET_DRIZZLE(self);
     drizzle_con_st *con_raw;
     if ((con_raw = drizzle_con_create(drizzle, NULL)) == NULL) {
         Perl_croak(aTHX_ "drizzle_con_create:NULL\n");
@@ -389,7 +393,7 @@ OUTPUT:
 SV*
 con_add_tcp(SV* self, const char *host, U16 port, const char * user, const char * password, const char *db, drizzle_con_options_t opt)
 CODE:
-    drizzle_st * drizzle = XS_STATE(drizzle_st*, self);
+    drizzle_st * drizzle = GET_DRIZZLE(self);
     drizzle_con_st *con_raw = drizzle_con_add_tcp(
                                          drizzle,
                                          NULL, /* auto allocate */
@@ -403,8 +407,9 @@ void
 DESTROY(SV* _self)
 CODE:
     LOG("DESTROY drizzle 0x%X\n", (unsigned int)_self);
-    drizzle_st *drizzle = XS_STATE(drizzle_st*, _self);
-    drizzle_free(drizzle); // wtf? this cause segv.
+    drizzle_st *drizzle = GET_DRIZZLE(_self);
+    drizzle_free(drizzle);
+    Safefree(drizzle);
 
 void
 query_run_all(drizzle_st *self)
@@ -438,7 +443,7 @@ OUTPUT:
 SV*
 add_options(SV* self, int opt)
 CODE:
-    drizzle_st * drizzle = XS_STATE(drizzle_st*, self);
+    drizzle_st * drizzle = GET_DRIZZLE(self);
     drizzle_add_options(drizzle, opt);
     RETVAL = SvREFCNT_inc(self);
 OUTPUT:
@@ -447,7 +452,7 @@ OUTPUT:
 void
 con_wait(SV* self)
 CODE:
-    drizzle_st * drizzle = XS_STATE(drizzle_st*, self);
+    drizzle_st * drizzle = GET_DRIZZLE(self);
     drizzle_return_t ret = drizzle_con_wait(drizzle);
     if (ret != DRIZZLE_RETURN_OK) {
         // Perl_croak(aTHX_ "drizzle_con_wait:%s\n", drizzle_error(drizzle));
@@ -456,7 +461,7 @@ CODE:
 void
 con_ready(SV* self)
 PPCODE:
-    drizzle_st * drizzle = XS_STATE(drizzle_st*, self);
+    drizzle_st * drizzle = GET_DRIZZLE(self);
     drizzle_con_st * con_raw = drizzle_con_ready(drizzle);
     if (con_raw) {
         ST(0) = _create_con(self, con_raw);
@@ -484,7 +489,7 @@ void
 query_run(SV* self)
 PPCODE:
     dTARGET;
-    drizzle_st *drizzle = XS_STATE(drizzle_st*, self);
+    drizzle_st *drizzle = GET_DRIZZLE(self);
     drizzle_return_t ret = 0;
     drizzle_query_st * query = drizzle_query_run(drizzle, &ret);
     if (query) {
@@ -507,7 +512,7 @@ CODE:
 
     drizzle_con_st * con;
     SV * drizzle = _create_drizzle();
-    if ((con = drizzle_con_create(XS_STATE(drizzle_st*, drizzle), NULL)) == NULL) {
+    if ((con = drizzle_con_create(GET_DRIZZLE(drizzle), NULL)) == NULL) {
         Perl_croak(aTHX_ "drizzle_con_create:NULL\n");
     }
 
