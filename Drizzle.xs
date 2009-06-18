@@ -69,6 +69,7 @@ SV *_bless(const char *class, void *obj) {
 SV* _create_drizzle() {
     drizzle_st * self;
     Newxz(self, 1, drizzle_st);
+    LOG("CREATE DRIZZLE\n");
     if (drizzle_create(self) == NULL) {
         Perl_croak(aTHX_ "drizzle_create:NULL\n"); /* should not reache here */
     }
@@ -98,6 +99,7 @@ net_col * _create_col(SV* result_sv, drizzle_column_st* col_raw) {
 SV * _create_con(SV* drizzle_sv, drizzle_con_st *con_raw) {
     net_con *con;
     Newxz(con, 1, net_con);
+    LOG("CREATE connection drizzle=0x%X\n", (unsigned int)GET_DRIZZLE(drizzle_sv));
     con->drizzle = SvREFCNT_inc_simple(drizzle_sv);
     con->con     = con_raw;
     return _bless("Net::Drizzle::Connection", con);
@@ -807,18 +809,15 @@ CODE:
 OUTPUT:
     RETVAL
 
-net_con*
+SV*
 clone(net_con* self)
 CODE:
-    net_con *con;
-    Newxz(con, 1, net_con);
-    con->drizzle = self->drizzle;
-    SvREFCNT_inc(self->drizzle);
-    drizzle_st * drizzle = XS_STATE(drizzle_st*, self->drizzle);
-    if ((con->con = drizzle_con_clone(drizzle, NULL, self->con)) == NULL) {
-        Perl_croak(aTHX_ "drizzle_con_clone:%s\n", drizzle_error(drizzle));
+    drizzle_con_st *newcon;
+    if ((newcon = drizzle_con_clone(GET_DRIZZLE(self->drizzle), NULL, self->con)) == NULL) {
+        Perl_croak(aTHX_ "drizzle_con_clone:%s\n", drizzle_error(GET_DRIZZLE(self->drizzle)));
     }
-    RETVAL = con;
+    LOG("%X\n", self->drizzle);
+    RETVAL = _create_con(self->drizzle, newcon);
 OUTPUT:
     RETVAL
 
@@ -859,7 +858,7 @@ void
 DESTROY(SV *_self)
 CODE:
     net_con * self = XS_STATE(net_con*, _self);
-    LOG("DESTROY connection 0x%X\n", (unsigned int)self->drizzle);
+    LOG("DESTROY connection 0x%X, drizzle->refcnt=%d\n", (unsigned int)self->drizzle, (int)SvREFCNT(self->drizzle));
 
     if (self->drizzle != NULL) {
          SvREFCNT_dec(self->drizzle);
