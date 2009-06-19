@@ -865,10 +865,12 @@ CODE:
     net_con * self = XS_STATE(net_con*, _self);
     drizzle_st * drizzle = GET_DRIZZLE(self->drizzle);
     size_t query_len;
-    const char* query_c = SvPV(query, query_len);
+    const char* orig_query_c = SvPV(query, query_len);
+    SV * copied_query = newSVpvn(orig_query_c, query_len);
+    const char * copied_query_c = SvPV_nolen(copied_query);
     drizzle_query_st *query_d;
-    av_push(GET_DRIZZLE_QUERIES(self->drizzle), SvREFCNT_inc(query)); /* note. we should not free the query_c. because drizzle_query_add does not make a copy. use this directly. */
-    if ((query_d = drizzle_query_add(drizzle, NULL, self->con, NULL, query_c,
+    av_push(GET_DRIZZLE_QUERIES(self->drizzle), SvREFCNT_inc(copied_query)); /* note. we should not free the query_c. because drizzle_query_add does not make a copy. use this directly. */
+    if ((query_d = drizzle_query_add(drizzle, NULL, self->con, NULL, copied_query_c,
                               query_len, (drizzle_query_options_t)0, NULL)) == NULL) {
          Perl_croak(aTHX_ "drizzle_query_add:%s\n", drizzle_error(drizzle));
     }
