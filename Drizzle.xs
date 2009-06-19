@@ -16,6 +16,10 @@ extern "C" {
 }
 #endif
 
+typedef struct net_drizzle {
+    drizzle_st *drizzle;
+} net_drizzle;
+
 typedef struct net_query {
     SV * drizzle;
     SV * con;
@@ -58,7 +62,7 @@ typedef struct net_col {
     }
 
 #define GET_DRIZZLE(x) \
-            XS_STATE(drizzle_st*, (x))
+            XS_STATE(net_drizzle*, (x))->drizzle
 
 inline
 SV *_bless(const char *class, void *obj) {
@@ -68,9 +72,10 @@ SV *_bless(const char *class, void *obj) {
 }
 
 SV* _create_drizzle() {
-    drizzle_st * self;
-    Newxz(self, 1, drizzle_st);
-    if (drizzle_create(self) == NULL) {
+    net_drizzle * self;
+    Newxz(self, 1, net_drizzle);
+    Newxz(self->drizzle, 1, drizzle_st);
+    if (drizzle_create(self->drizzle) == NULL) {
         Perl_croak(aTHX_ "drizzle_create:NULL\n"); /* should not reache here */
     }
     SV * ret = _bless("Net::Drizzle", self);
@@ -439,11 +444,12 @@ CODE:
     Safefree(drizzle);
 
 void
-query_run_all(drizzle_st *self)
+query_run_all(SV *self)
 CODE:
-    drizzle_return_t ret = drizzle_query_run_all(self);
+    drizzle_st *drizzle = GET_DRIZZLE(self);
+    drizzle_return_t ret = drizzle_query_run_all(drizzle);
     if (ret != DRIZZLE_RETURN_OK) {
-        Perl_croak(aTHX_ "drizzle_query_run_all:%s\n", drizzle_error(self));
+        Perl_croak(aTHX_ "drizzle_query_run_all:%s\n", drizzle_error(drizzle));
     }
 
 SV *
@@ -501,16 +507,18 @@ PPCODE:
     }
 
 const char*
-error(drizzle_st* self)
+error(SV* self)
 CODE:
-    RETVAL=drizzle_error(self);
+    drizzle_st* drizzle = GET_DRIZZLE(self);
+    RETVAL=drizzle_error(drizzle);
 OUTPUT:
     RETVAL
 
 int
-error_code(drizzle_st* self)
+error_code(SV* self)
 CODE:
-    RETVAL=drizzle_error_code(self);
+    drizzle_st* drizzle = GET_DRIZZLE(self);
+    RETVAL=drizzle_error_code(drizzle);
 OUTPUT:
     RETVAL
 
@@ -849,7 +857,7 @@ SV*
 query_add(SV *_self, SV *query)
 CODE:
     net_con * self = XS_STATE(net_con*, _self);
-    drizzle_st * drizzle = XS_STATE(drizzle_st*, self->drizzle);
+    drizzle_st * drizzle = GET_DRIZZLE(self->drizzle);
     size_t query_len;
     const char* query_c = SvPV(query, query_len);
     drizzle_query_st *query_d;

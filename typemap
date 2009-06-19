@@ -1,5 +1,5 @@
 TYPEMAP
-drizzle_st*          T_DRIZZLE
+net_drizzle*          T_DRIZZLE
 net_con*               T_CON
 net_result*               T_RESULT
 net_col*               T_COL
@@ -13,7 +13,7 @@ T_CON
     $var = XS_STATE(net_con*, $arg);
 
 T_DRIZZLE
-    $var = XS_STATE(drizzle_st*, $arg);
+    $var = XS_STATE(net_drizzle*, $arg);
 
 T_RESULT
     $var = XS_STATE(net_result*, $arg);
