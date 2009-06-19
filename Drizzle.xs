@@ -473,6 +473,21 @@ CODE:
 OUTPUT:
     RETVAL
 
+SV *
+hex_string(SV *class, SV* str)
+CODE:
+    PERL_UNUSED_VAR(class);
+    STRLEN str_len;
+    const char * str_c = SvPV(str, str_len);
+    char * buf;
+    Newxz(buf, str_len*2+1, char);
+    uint64_t dst_len = drizzle_hex_string(buf, str_c, str_len);
+    SV * res = newSVpvn(buf, dst_len);
+    Safefree(buf);
+    RETVAL = res;
+OUTPUT:
+    RETVAL
+
 const char *
 drizzle_version(SV *class)
 CODE:
