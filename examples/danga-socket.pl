@@ -51,8 +51,6 @@ Danga::Socket->EventLoop();
 exit; # should not reach here
 
 sub run_timer {
-    return;
-
     Danga::Socket->AddTimer(
         1 => sub {
             print "awake by timer\n";

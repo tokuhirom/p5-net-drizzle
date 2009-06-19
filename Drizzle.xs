@@ -853,6 +853,7 @@ CODE:
     size_t query_len;
     const char* query_c = SvPV(query, query_len);
     drizzle_query_st *query_d;
+    /* note. we should copy the query_c. because drizzle_query_add does not make a copy */
     if ((query_d = drizzle_query_add(drizzle, NULL, self->con, NULL, query_c,
                               query_len, (drizzle_query_options_t)0, NULL)) == NULL) {
          Perl_croak(aTHX_ "drizzle_query_add:%s\n", drizzle_error(drizzle));
