@@ -18,6 +18,7 @@ extern "C" {
 
 typedef struct net_drizzle {
     drizzle_st *drizzle;
+    AV * queries;
 } net_drizzle;
 
 typedef struct net_query {
@@ -64,6 +65,9 @@ typedef struct net_col {
 #define GET_DRIZZLE(x) \
             XS_STATE(net_drizzle*, (x))->drizzle
 
+#define GET_DRIZZLE_QUERIES(x) \
+    (XS_STATE(net_drizzle*, (x))->queries)
+
 inline
 SV *_bless(const char *class, void *obj) {
     SV * ret = newSViv(0);
@@ -78,6 +82,7 @@ SV* _create_drizzle() {
     if (drizzle_create(self->drizzle) == NULL) {
         Perl_croak(aTHX_ "drizzle_create:NULL\n"); /* should not reache here */
     }
+    self->queries = newAV();
     SV * ret = _bless("Net::Drizzle", self);
     LOG("CREATE drizzle 0x%X\n", (unsigned int)ret);
     return ret;
@@ -441,6 +446,7 @@ CODE:
     LOG("DESTROY drizzle 0x%X, drizzle->refcnt=%d\n", (unsigned int)_self, (int)SvREFCNT(_self));
     drizzle_st *drizzle = GET_DRIZZLE(_self);
     drizzle_free(drizzle);
+    av_undef(GET_DRIZZLE_QUERIES(_self));
     Safefree(drizzle);
 
 void
@@ -861,7 +867,7 @@ CODE:
     size_t query_len;
     const char* query_c = SvPV(query, query_len);
     drizzle_query_st *query_d;
-    /* note. we should copy the query_c. because drizzle_query_add does not make a copy */
+    av_push(GET_DRIZZLE_QUERIES(self->drizzle), SvREFCNT_inc(query)); /* note. we should not free the query_c. because drizzle_query_add does not make a copy. use this directly. */
     if ((query_d = drizzle_query_add(drizzle, NULL, self->con, NULL, query_c,
                               query_len, (drizzle_query_options_t)0, NULL)) == NULL) {
          Perl_croak(aTHX_ "drizzle_query_add:%s\n", drizzle_error(drizzle));

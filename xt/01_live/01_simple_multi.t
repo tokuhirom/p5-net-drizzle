@@ -17,6 +17,7 @@ my $s1 = $c1->query_add($query);
 for (1..$cons) {
     push @sth, $c1->clone->query_add($query);
 }
+undef $query;
 $dr->query_run_all();
 check_result($s1->result);
 check_result($_->result) for @sth;
