@@ -305,6 +305,30 @@ Net::Drizzle - perl bindings for libdrizzle
 =head1 DESCRIPTION
 
 Net::Drizzle is perl bindings for libdrizzle.
+Net::Drizzle has a straightforward interface for libdrizzle.
+If you want a DBI like inteface, please use DBD::Drizzle instead.
+
+libdrizzle can connect to mysql server and drizzle server.
+You can use libdrizzle as better version of libmysqlclient.
+
+libdrizzle's great features are listed below.
+
+=over 4
+
+=item Concurrent Queries
+
+Net::Drizzle can handle the concurrent queries.The example code is in the synopsis.
+
+=item Non-blocking I/O support
+
+Net::Drizzle can use with any event driven frameworks such as POE, Danga::Socket, etc.
+
+=item Server interface
+
+This library provides server protocol interface.
+You can use it to write proxies or "fake" drizzle and mysql servers.
+
+=back
 
 =head1 METHODS
 
