@@ -654,6 +654,14 @@ CODE:
 OUTPUT:
     RETVAL
 
+U8
+protocol_version(SV* self)
+CODE:
+    net_con * con = XS_STATE(net_con*, self);
+    RETVAL = drizzle_con_protocol_version(con->con);
+OUTPUT:
+    RETVAL
+
 SV*
 set_protocol_version(SV* self, U8 protocol_version)
 CODE:
@@ -1187,6 +1195,12 @@ MODULE = Net::Drizzle  PACKAGE = Net::Drizzle::Column
 const char*
 [% type %](SV*self)
 CODE:
+    /**
+     *     my $[% type %] = $column->[% type %];
+     *
+     * Get [% type %] for a column.
+     *
+     */
     const char *ret = drizzle_column_[% type %]((XS_STATE(net_col*, self))->col);
     if (ret != NULL) {
         RETVAL = ret;
@@ -1199,6 +1213,12 @@ OUTPUT:
 SV*
 set_[% type %](SV*self, const char* arg)
 CODE:
+    /**
+     *     my $[% type %] = $column->[% type %];
+     *
+     * Set [% type %] for a column.
+     *
+     */
     drizzle_column_set_[% type %]((XS_STATE(net_col*, self))->col, arg);
     RETVAL = SvREFCNT_inc(self);
 OUTPUT:
@@ -1209,6 +1229,9 @@ OUTPUT:
 SV*
 set_charset(SV*self, U8 arg)
 CODE:
+    /**
+     * Set charset for column.
+     */
     drizzle_column_set_charset(XS_STATE(net_col*, self)->col, arg);
     RETVAL = SvREFCNT_inc(self);
 OUTPUT:
@@ -1217,6 +1240,9 @@ OUTPUT:
 SV*
 set_size(SV*self, U32 arg)
 CODE:
+    /**
+     * Set size for column.
+     */
     drizzle_column_set_size(XS_STATE(net_col*, self)->col, arg);
     RETVAL = SvREFCNT_inc(self);
 OUTPUT:
@@ -1225,6 +1251,9 @@ OUTPUT:
 SV*
 set_type(SV*self, int arg)
 CODE:
+    /**
+     * Set type for column.
+     */
     drizzle_column_set_type(XS_STATE(net_col*, self)->col, arg);
     RETVAL = SvREFCNT_inc(self);
 OUTPUT:
@@ -1233,6 +1262,9 @@ OUTPUT:
 SV*
 write(SV * self)
 CODE:
+    /**
+     * Write column information.
+     */
     net_col *col = XS_STATE(net_col*, self);
     drizzle_result_st * result = drizzle_column_drizzle_result(col->col);
     drizzle_return_t ret = drizzle_column_write(result, col->col);
@@ -1248,6 +1280,9 @@ OUTPUT:
 void
 DESTROY(net_col *self)
 CODE:
+    /**
+     * Destructor.
+     */
     LOG("DESTROY column 0x%X\n", (unsigned int)self->drizzle);
 
     if (self->drizzle != NULL) {
@@ -1266,6 +1301,9 @@ MODULE = Net::Drizzle  PACKAGE = Net::Drizzle::Query
 void
 string(SV*self)
 PPCODE:
+    /**
+     * Get the string for a query.
+     */
     net_query *query = XS_STATE(net_query*, self);
     size_t size;
     const char * str = drizzle_query_string(query->query, &size);
@@ -1275,6 +1313,9 @@ PPCODE:
 SV*
 result(SV*self)
 CODE:
+    /**
+     * Get the result for a query.
+     */
     net_query *query = XS_STATE(net_query*, self);
     drizzle_result_st *result = drizzle_query_result(query->query);
     RETVAL = _create_result(query->con, self, result);
@@ -1284,6 +1325,9 @@ OUTPUT:
 void
 DESTROY(SV *self_sv)
 CODE:
+    /**
+     * destructor
+     */
     net_query *self = XS_STATE(net_query*, self_sv);
 
     LOG("DESTROY query 0x%X, drizzle->refcnt=%d\n", (unsigned int)self->drizzle, (int)SvREFCNT(self->drizzle));

@@ -314,9 +314,13 @@ Net::Drizzle is perl bindings for libdrizzle.
 
 create new instance of Net::Drizzle.
 
-=item my $con = $drizzle->create_con();
+=item my $con = $drizzle->con_create();
 
 create new connection object.
+
+=item my $con = $drizzle->con_add_tcp($host, $port, $user, $password, $db, $options);
+
+create new connection object for a lot of informations.
 
 =item $drizzle->query_run_all();
 
@@ -326,9 +330,33 @@ run all queries concurrently.
 
 quote meta chars.
 
+=item Net::Drizzle->hex_string("\x61");
+
+This method is same as unpack('H*', $str).
+
 =item my $ver = Net::Drizzle->drizzle_version();
 
 get the version of libdrizzle
+
+=item $drizzle->add_options($options)
+
+add options.
+
+=item $drizzle->con_wait();
+
+Wait for I/O on connections.
+
+=item $drizzle->error();
+
+Return an error string for last library error encoutered.
+
+=item $drizzle->error_code()
+
+Return an error code for last library error encoutered.
+
+=item $drizzle->query_run()
+
+Run queries concurrently, returning when one is complete.
 
 =back
 
