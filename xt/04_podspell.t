@@ -13,3 +13,7 @@ db
 foo
 hostname
 tcp
+DBI
+callbacks
+libmysqlclient
+libdrizzle's

@@ -306,7 +306,7 @@ Net::Drizzle - perl bindings for libdrizzle
 
 Net::Drizzle is perl bindings for libdrizzle.
 Net::Drizzle has a straightforward interface for libdrizzle.
-If you want a DBI like inteface, please use DBD::Drizzle instead.
+If you want a DBI like interface, please use DBD::Drizzle instead.
 
 libdrizzle can connect to mysql server and drizzle server.
 You can use libdrizzle as better version of libmysqlclient.
@@ -372,11 +372,11 @@ Wait for I/O on connections.
 
 =item $drizzle->error();
 
-Return an error string for last library error encoutered.
+Return an error string for last library error encountered.
 
 =item $drizzle->error_code()
 
-Return an error code for last library error encoutered.
+Return an error code for last library error encountered.
 
 =item $drizzle->query_run()
 

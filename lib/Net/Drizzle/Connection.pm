@@ -137,7 +137,7 @@ create new query
 
 =item $con->set_fd($fd)
 
-Use given file descriptor for connction.
+Use given file descriptor for connection.
 
 =item $con->result_create($fd)
 
