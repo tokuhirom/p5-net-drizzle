@@ -1,6 +1,7 @@
 use inc::Module::Install;
 name 'Net-Drizzle';
 all_from 'lib/Net/Drizzle.pm';
+no_index 'tools/extlib/';
 
 can_cc or die "This module requires a C compiler";
 
@@ -22,10 +23,10 @@ makemaker_args(
 tests 't/*.t';
 recursive_author_tests('xt');
 
-postamble <<'...';
+postamble <<"...";
 Drizzle.xs: Drizzle.xs.tt
 	rm -f Drizzle.xs
-	tpage Drizzle.xs.tt > Drizzle.xs
+	$^X tools/mpage.pl Drizzle.xs.tt Drizzle.xs
 	chmod 440 Drizzle.xs
 ...
 

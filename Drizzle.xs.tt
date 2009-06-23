@@ -1,4 +1,4 @@
-[% "/* This file is auto generated from Drizzle.xs.tt. Do not modify directly */" %]
+?# /* This file is auto generated from Drizzle.xs.tt. Do not modify directly */
 /*
     vim: ft=xs
 */
@@ -979,17 +979,17 @@ CODE:
 OUTPUT:
     RETVAL
 
-[% FOR v IN [{type => 'uint64_t', name => 'row_count'}, {type => 'uint64_t', name => 'insert_id'}, {type => 'uint16_t', name => 'warning_count'}] %]
+? for my $v ({type => 'uint64_t', name => 'row_count'}, {type => 'uint64_t', name => 'insert_id'}, {type => 'uint16_t', name => 'warning_count'}) {
 
-[% v.type %]
-[% v.name %](net_result *self)
+<?= $v->{type} ?>
+<?= $v->{name} ?>(net_result *self)
 CODE:
     drizzle_result_st *result = self->result;
-    RETVAL = drizzle_result_[% v.name %](result);
+    RETVAL = drizzle_result_<?= $v->{name} ?>(result);
 OUTPUT:
     RETVAL
 
-[% END %]
+? }
 
 unsigned int
 column_count(net_result *self)
@@ -1195,18 +1195,18 @@ CODE:
 
 MODULE = Net::Drizzle  PACKAGE = Net::Drizzle::Column
 
-[% FOR type IN ['catalog', 'db', 'table', 'orig_table', 'name', 'orig_name'] %]
+? for my $v (qw/catalog db table orig_table name orig_name/) {
 
 const char*
-[% type %](SV*self)
+<?= $v ?>(SV*self)
 CODE:
     /**
-     *     my $[% type %] = $column->[% type %];
+     *     my $<?= $v ?> = $column-><?= $v ?>;
      *
-     * Get [% type %] for a column.
+     * Get <?= $v ?> for a column.
      *
      */
-    const char *ret = drizzle_column_[% type %]((XS_STATE(net_col*, self))->col);
+    const char *ret = drizzle_column_<?= $v ?>((XS_STATE(net_col*, self))->col);
     if (ret != NULL) {
         RETVAL = ret;
     } else {
@@ -1216,20 +1216,20 @@ OUTPUT:
     RETVAL
 
 SV*
-set_[% type %](SV*self, const char* arg)
+set_<?= $v ?>(SV*self, const char* arg)
 CODE:
     /**
-     *     my $[% type %] = $column->[% type %];
+     *     my $<?= $v ?> = $column-><?= $v ?>;
      *
-     * Set [% type %] for a column.
+     * Set <?= $v ?> for a column.
      *
      */
-    drizzle_column_set_[% type %]((XS_STATE(net_col*, self))->col, arg);
+    drizzle_column_set_<?= $v ?>((XS_STATE(net_col*, self))->col, arg);
     RETVAL = SvREFCNT_inc(self);
 OUTPUT:
     RETVAL
 
-[% END %]
+? }
 
 SV*
 set_charset(SV*self, U8 arg)

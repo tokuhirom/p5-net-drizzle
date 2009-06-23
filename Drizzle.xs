@@ -1,4 +1,4 @@
-/* This file is auto generated from Drizzle.xs.tt. Do not modify directly */
+?# /* This file is auto generated from Drizzle.xs.tt. Do not modify directly */
 /*
     vim: ft=xs
 */
@@ -52,21 +52,13 @@ typedef struct net_col {
 #define LOG(...)
 #endif
 
-#define XS_STATE(type, x) \
-    (INT2PTR(type, SvROK(x) ? SvIV(SvRV(x)) : SvIV(x)))
+#define XS_STATE(type, x)     (INT2PTR(type, SvROK(x) ? SvIV(SvRV(x)) : SvIV(x)))
 
-#define XS_STRUCT2OBJ(sv, class, obj) \
-    if (obj == NULL) { \
-        sv_setsv(sv, &PL_sv_undef); \
-    } else { \
-        sv_setref_pv(sv, class, (void *) obj); \
-    }
+#define XS_STRUCT2OBJ(sv, class, obj)     if (obj == NULL) {         sv_setsv(sv, &PL_sv_undef);     } else {         sv_setref_pv(sv, class, (void *) obj);     }
 
-#define GET_DRIZZLE(x) \
-            XS_STATE(net_drizzle*, (x))->drizzle
+#define GET_DRIZZLE(x)             XS_STATE(net_drizzle*, (x))->drizzle
 
-#define GET_DRIZZLE_QUERIES(x) \
-    (XS_STATE(net_drizzle*, (x))->queries)
+#define GET_DRIZZLE_QUERIES(x)     (XS_STATE(net_drizzle*, (x))->queries)
 
 inline
 SV *_bless(const char *class, void *obj) {
@@ -980,7 +972,6 @@ OUTPUT:
     RETVAL
 
 
-
 uint64_t
 row_count(net_result *self)
 CODE:
@@ -988,7 +979,6 @@ CODE:
     RETVAL = drizzle_result_row_count(result);
 OUTPUT:
     RETVAL
-
 
 
 uint64_t
@@ -1000,7 +990,6 @@ OUTPUT:
     RETVAL
 
 
-
 uint16_t
 warning_count(net_result *self)
 CODE:
@@ -1008,7 +997,6 @@ CODE:
     RETVAL = drizzle_result_warning_count(result);
 OUTPUT:
     RETVAL
-
 
 
 unsigned int
@@ -1216,7 +1204,6 @@ CODE:
 MODULE = Net::Drizzle  PACKAGE = Net::Drizzle::Column
 
 
-
 const char*
 catalog(SV*self)
 CODE:
@@ -1248,7 +1235,6 @@ CODE:
     RETVAL = SvREFCNT_inc(self);
 OUTPUT:
     RETVAL
-
 
 
 const char*
@@ -1284,7 +1270,6 @@ OUTPUT:
     RETVAL
 
 
-
 const char*
 table(SV*self)
 CODE:
@@ -1316,7 +1301,6 @@ CODE:
     RETVAL = SvREFCNT_inc(self);
 OUTPUT:
     RETVAL
-
 
 
 const char*
@@ -1352,7 +1336,6 @@ OUTPUT:
     RETVAL
 
 
-
 const char*
 name(SV*self)
 CODE:
@@ -1386,7 +1369,6 @@ OUTPUT:
     RETVAL
 
 
-
 const char*
 orig_name(SV*self)
 CODE:
@@ -1418,7 +1400,6 @@ CODE:
     RETVAL = SvREFCNT_inc(self);
 OUTPUT:
     RETVAL
-
 
 
 SV*
