@@ -1,5 +1,8 @@
 use strict;
 use warnings;
+use FindBin;
+use File::Spec;
+use lib File::Spec->catfile($FindBin::Bin, 'extlib', 'lib', 'perl5');
 use Text::MicroTemplate;
 
 die "Usage: $0 src dst" unless @ARGV == 2;
