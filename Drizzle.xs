@@ -1,4 +1,3 @@
-?# /* This file is auto generated from Drizzle.xs.tt. Do not modify directly */
 /*
     vim: ft=xs
 */
