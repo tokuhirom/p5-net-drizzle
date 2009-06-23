@@ -12,7 +12,6 @@
 \.cvsignore
 ^t/9\d_.*\.t
 ^t/perlcritic
-^tools/
 \.svn/
 ^[^/]+\.yaml$
 ^[^/]+\.pl$
