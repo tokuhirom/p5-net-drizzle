@@ -173,6 +173,10 @@ Read client handshake packet.
 
 Set server version for connection.
 
+=item $con->close();
+
+Close server connection.
+
 =back
 
 =head1 AUTHOR

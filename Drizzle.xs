@@ -599,6 +599,11 @@ CODE:
 OUTPUT:
     RETVAL
 
+void
+close(net_con* self)
+CODE:
+    drizzle_con_close(self->con);
+
 int
 connect(net_con* con)
 CODE:

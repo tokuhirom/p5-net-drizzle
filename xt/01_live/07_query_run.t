@@ -42,6 +42,7 @@ sub aggregate {
             is $query->string, 'SELECT table_schema,table_name FROM tables', 'query';
             my $result = $query->result;
             check_result($result);
+            $query->con->close;
             if ($queries == 0) {
                 return;
             }
