@@ -67,6 +67,7 @@ POE::Session->create(
                 sender   => $_[SENDER]->ID,
                 callback => $callback,
             };
+            warn $_[SENDER]->ID;
             while (1) {
                 my $ret = handle_once($_[KERNEL], $_[HEAP]->{drizzle}, $container, undef);
                 if ($ret == DRIZZLE_RETURN_IO_WAIT) {

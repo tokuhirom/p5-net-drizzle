@@ -18,6 +18,11 @@ Net::Drizzle::Query - Query object for Net::Drizzle
 
 =over 4
 
+=item con
+
+Get a connection for a query.
+     
+
 =item string
 
 Get the string for a query.

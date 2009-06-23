@@ -5,7 +5,7 @@ use Net::Drizzle ':constants';
 use Devel::Peek;
 
 my $cons = 10;
-plan tests => ($cons) * 5;
+plan tests => ($cons) * 6;
 
 &main;exit;
 
@@ -27,6 +27,7 @@ sub setup {
                 ->set_db("information_schema");
     for (1..$cons) {
         my $q = $c1->clone->query_add($query);
+        isa_ok $q->con, 'Net::Drizzle::Connection';
     }
 }
 

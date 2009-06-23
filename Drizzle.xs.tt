@@ -1298,6 +1298,19 @@ CODE:
 
 MODULE = Net::Drizzle  PACKAGE = Net::Drizzle::Query
 
+SV*
+con(SV*self)
+CODE:
+    /**
+     * Get a connection for a query.
+     */
+    net_query *query = XS_STATE(net_query*, self);
+    drizzle_con_st * con = drizzle_query_con(query->query);
+    assert(con);
+    RETVAL = _create_con(query->drizzle, con);
+OUTPUT:
+    RETVAL
+
 void
 string(SV*self)
 PPCODE:
