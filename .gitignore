@@ -11,3 +11,4 @@ nytprof.out
 *.bs
 Drizzle.c
 core
+*.c

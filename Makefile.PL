@@ -23,6 +23,7 @@ makemaker_args(
 tests 't/*.t';
 recursive_author_tests('xt');
 render_mt('Drizzle.xs.tt' => 'Drizzle.xs');
+render_mt('Connection.xs.tt' => 'Connection.xs');
 
 build_requires 'Test::More';
 use_test_base;

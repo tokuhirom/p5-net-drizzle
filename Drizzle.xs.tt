@@ -979,17 +979,6 @@ CODE:
 OUTPUT:
     RETVAL
 
-? for my $v ({type => 'uint64_t', name => 'row_count'}, {type => 'uint64_t', name => 'insert_id'}, {type => 'uint16_t', name => 'warning_count'}) {
-
-<?= $v->{type} ?>
-<?= $v->{name} ?>(net_result *self)
-CODE:
-    drizzle_result_st *result = self->result;
-    RETVAL = drizzle_result_<?= $v->{name} ?>(result);
-OUTPUT:
-    RETVAL
-
-? }
 
 unsigned int
 column_count(net_result *self)
@@ -1195,41 +1184,6 @@ CODE:
 
 MODULE = Net::Drizzle  PACKAGE = Net::Drizzle::Column
 
-? for my $v (qw/catalog db table orig_table name orig_name/) {
-
-const char*
-<?= $v ?>(SV*self)
-CODE:
-    /**
-     *     my $<?= $v ?> = $column-><?= $v ?>;
-     *
-     * Get <?= $v ?> for a column.
-     *
-     */
-    const char *ret = drizzle_column_<?= $v ?>((XS_STATE(net_col*, self))->col);
-    if (ret != NULL) {
-        RETVAL = ret;
-    } else {
-        XSRETURN_UNDEF;
-    }
-OUTPUT:
-    RETVAL
-
-SV*
-set_<?= $v ?>(SV*self, const char* arg)
-CODE:
-    /**
-     *     my $<?= $v ?> = $column-><?= $v ?>;
-     *
-     * Set <?= $v ?> for a column.
-     *
-     */
-    drizzle_column_set_<?= $v ?>((XS_STATE(net_col*, self))->col, arg);
-    RETVAL = SvREFCNT_inc(self);
-OUTPUT:
-    RETVAL
-
-? }
 
 SV*
 set_charset(SV*self, U8 arg)
