@@ -1,5 +1,9 @@
 Revision history for Perl extension Net::Drizzle
 
+0.04
+
+        - split XS code for each package
+
 0.03
 
         - fixed packaging issue
