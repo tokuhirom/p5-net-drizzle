@@ -17,3 +17,4 @@ DBI
 callbacks
 libmysqlclient
 libdrizzle's
+API
