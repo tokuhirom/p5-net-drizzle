@@ -313,8 +313,7 @@ You can use libdrizzle as better version of libmysqlclient.
 
 libdrizzle's great features are listed below.
 
-B<THIS MODULE IS IN ITS BETA QUALITY. THE API IS STOLEN FROM SCRAPI BUT MAY CHAN
-GE IN THE FUTURE>
+B<THIS MODULE IS IN ITS BETA QUALITY. API MAY CHANGE IN THE FUTURE>
 
 =over 4
 
