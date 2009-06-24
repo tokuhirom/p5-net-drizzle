@@ -22,13 +22,7 @@ makemaker_args(
 
 tests 't/*.t';
 recursive_author_tests('xt');
-
-postamble <<"...";
-Drizzle.xs: Drizzle.xs.tt
-	rm -f Drizzle.xs
-	$^X tools/mpage.pl Drizzle.xs.tt Drizzle.xs
-	chmod 440 Drizzle.xs
-...
+render_mt('Drizzle.xs.tt' => 'Drizzle.xs');
 
 build_requires 'Test::More';
 use_test_base;
