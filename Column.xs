@@ -14,18 +14,17 @@ MODULE = Net::Drizzle::Column  PACKAGE = Net::Drizzle::Column
 
 VERSIONCHECK: DISABLE
 
-? for my $v (qw/catalog db table orig_table name orig_name/) {
 
 const char*
-<?= $v ?>(SV*self)
+catalog(SV*self)
 CODE:
     /**
-     *     my $<?= $v ?> = $column-><?= $v ?>;
+     *     my $catalog = $column->catalog;
      *
-     * Get <?= $v ?> for a column.
+     * Get catalog for a column.
      *
      */
-    const char *ret = drizzle_column_<?= $v ?>((XS_STATE(net_col*, self))->col);
+    const char *ret = drizzle_column_catalog((XS_STATE(net_col*, self))->col);
     if (ret != NULL) {
         RETVAL = ret;
     } else {
@@ -35,20 +34,184 @@ OUTPUT:
     RETVAL
 
 SV*
-set_<?= $v ?>(SV*self, const char* arg)
+set_catalog(SV*self, const char* arg)
 CODE:
     /**
-     *     my $<?= $v ?> = $column-><?= $v ?>;
+     *     my $catalog = $column->catalog;
      *
-     * Set <?= $v ?> for a column.
+     * Set catalog for a column.
      *
      */
-    drizzle_column_set_<?= $v ?>((XS_STATE(net_col*, self))->col, arg);
+    drizzle_column_set_catalog((XS_STATE(net_col*, self))->col, arg);
     RETVAL = SvREFCNT_inc(self);
 OUTPUT:
     RETVAL
 
-? }
+
+const char*
+db(SV*self)
+CODE:
+    /**
+     *     my $db = $column->db;
+     *
+     * Get db for a column.
+     *
+     */
+    const char *ret = drizzle_column_db((XS_STATE(net_col*, self))->col);
+    if (ret != NULL) {
+        RETVAL = ret;
+    } else {
+        XSRETURN_UNDEF;
+    }
+OUTPUT:
+    RETVAL
+
+SV*
+set_db(SV*self, const char* arg)
+CODE:
+    /**
+     *     my $db = $column->db;
+     *
+     * Set db for a column.
+     *
+     */
+    drizzle_column_set_db((XS_STATE(net_col*, self))->col, arg);
+    RETVAL = SvREFCNT_inc(self);
+OUTPUT:
+    RETVAL
+
+
+const char*
+table(SV*self)
+CODE:
+    /**
+     *     my $table = $column->table;
+     *
+     * Get table for a column.
+     *
+     */
+    const char *ret = drizzle_column_table((XS_STATE(net_col*, self))->col);
+    if (ret != NULL) {
+        RETVAL = ret;
+    } else {
+        XSRETURN_UNDEF;
+    }
+OUTPUT:
+    RETVAL
+
+SV*
+set_table(SV*self, const char* arg)
+CODE:
+    /**
+     *     my $table = $column->table;
+     *
+     * Set table for a column.
+     *
+     */
+    drizzle_column_set_table((XS_STATE(net_col*, self))->col, arg);
+    RETVAL = SvREFCNT_inc(self);
+OUTPUT:
+    RETVAL
+
+
+const char*
+orig_table(SV*self)
+CODE:
+    /**
+     *     my $orig_table = $column->orig_table;
+     *
+     * Get orig_table for a column.
+     *
+     */
+    const char *ret = drizzle_column_orig_table((XS_STATE(net_col*, self))->col);
+    if (ret != NULL) {
+        RETVAL = ret;
+    } else {
+        XSRETURN_UNDEF;
+    }
+OUTPUT:
+    RETVAL
+
+SV*
+set_orig_table(SV*self, const char* arg)
+CODE:
+    /**
+     *     my $orig_table = $column->orig_table;
+     *
+     * Set orig_table for a column.
+     *
+     */
+    drizzle_column_set_orig_table((XS_STATE(net_col*, self))->col, arg);
+    RETVAL = SvREFCNT_inc(self);
+OUTPUT:
+    RETVAL
+
+
+const char*
+name(SV*self)
+CODE:
+    /**
+     *     my $name = $column->name;
+     *
+     * Get name for a column.
+     *
+     */
+    const char *ret = drizzle_column_name((XS_STATE(net_col*, self))->col);
+    if (ret != NULL) {
+        RETVAL = ret;
+    } else {
+        XSRETURN_UNDEF;
+    }
+OUTPUT:
+    RETVAL
+
+SV*
+set_name(SV*self, const char* arg)
+CODE:
+    /**
+     *     my $name = $column->name;
+     *
+     * Set name for a column.
+     *
+     */
+    drizzle_column_set_name((XS_STATE(net_col*, self))->col, arg);
+    RETVAL = SvREFCNT_inc(self);
+OUTPUT:
+    RETVAL
+
+
+const char*
+orig_name(SV*self)
+CODE:
+    /**
+     *     my $orig_name = $column->orig_name;
+     *
+     * Get orig_name for a column.
+     *
+     */
+    const char *ret = drizzle_column_orig_name((XS_STATE(net_col*, self))->col);
+    if (ret != NULL) {
+        RETVAL = ret;
+    } else {
+        XSRETURN_UNDEF;
+    }
+OUTPUT:
+    RETVAL
+
+SV*
+set_orig_name(SV*self, const char* arg)
+CODE:
+    /**
+     *     my $orig_name = $column->orig_name;
+     *
+     * Set orig_name for a column.
+     *
+     */
+    drizzle_column_set_orig_name((XS_STATE(net_col*, self))->col, arg);
+    RETVAL = SvREFCNT_inc(self);
+OUTPUT:
+    RETVAL
+
 
 =item set_charset
 

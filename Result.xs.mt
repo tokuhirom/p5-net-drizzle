@@ -78,33 +78,17 @@ OUTPUT:
     RETVAL
 
 
+? for my $v ({type => 'uint64_t', name => 'row_count'}, {type => 'uint64_t', name => 'insert_id'}, {type => 'uint16_t', name => 'warning_count'}) {
 
-uint64_t
-row_count(net_result *self)
+<?= $v->{type} ?>
+<?= $v->{name} ?>(net_result *self)
 CODE:
     drizzle_result_st *result = self->result;
-    RETVAL = drizzle_result_row_count(result);
+    RETVAL = drizzle_result_<?= $v->{name} ?>(result);
 OUTPUT:
     RETVAL
 
-
-uint64_t
-insert_id(net_result *self)
-CODE:
-    drizzle_result_st *result = self->result;
-    RETVAL = drizzle_result_insert_id(result);
-OUTPUT:
-    RETVAL
-
-
-uint16_t
-warning_count(net_result *self)
-CODE:
-    drizzle_result_st *result = self->result;
-    RETVAL = drizzle_result_warning_count(result);
-OUTPUT:
-    RETVAL
-
+? }
 
 =item my $column_count = $result->column_count();
 

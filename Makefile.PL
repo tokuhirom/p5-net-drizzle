@@ -20,10 +20,13 @@ makemaker_args(
     },
 );
 
+cc_files map { "$_\.c" } qw/Connection Drizzle Result Column Query Const/;
 tests 't/*.t';
 recursive_author_tests('xt');
 render_mt('Drizzle.xs.tt' => 'Drizzle.xs');
 render_mt('Connection.xs.tt' => 'Connection.xs');
+render_mt('Column.xs.mt' => 'Column.xs');
+render_mt('Result.xs.mt' => 'Result.xs');
 
 build_requires 'Test::More';
 use_test_base;
