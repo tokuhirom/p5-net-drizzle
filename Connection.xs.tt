@@ -111,6 +111,20 @@ CODE:
 OUTPUT:
     RETVAL
 
+=item my $events = $con->events();
+
+Get events for connection.
+
+=cut
+short
+events(SV* self)
+CODE:
+    net_con * con = XS_STATE(net_con*, self);
+
+    RETVAL = con->con->events;
+OUTPUT:
+    RETVAL
+
 =item $con->set_db($dbname);
 
 set the db name.

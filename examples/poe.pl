@@ -74,7 +74,8 @@ POE::Session->create(
                     last;
                 }
             }
-            $_[KERNEL]->select($newcon->fh, 'handle_select', 'handle_select', undef, $container);
+            $container->{fh} = $newcon->fh;
+            rewatch($_[KERNEL], $container);
         },
         handle_select => sub {
             my ($mode, $container) = ($_[ARG1], $_[ARG2]);
@@ -87,6 +88,31 @@ POE::Session->create(
     },
 );
 
+sub rewatch {
+    my ($kernel, $container) = @_;
+    return unless $container->{fh};
+
+    my $events = $container->{con}->events;
+    if ($events & POLLIN) {
+        $kernel->select_read($container->{fh}, 'handle_select', $container);
+        $container->{watch_read} = 1;
+    } else {
+        if ($container->{watch_read}) {
+            $kernel->select_read($container->{fh});
+            $container->{watch_read} = 0;
+        }
+    }
+    if ($events & POLLOUT) {
+        $kernel->select_write($container->{fh}, 'handle_select', $container);
+        $container->{watch_write} = 1;
+    } else {
+        if ($container->{watch_write}) {
+            $kernel->select_write($container->{fh});
+            $container->{watch_write} = 0;
+        }
+    }
+}
+
 sub handle_once {
     my ($kernel, $drizzle, $container, $mode) = @_;
 
@@ -97,10 +123,10 @@ sub handle_once {
     if ($ret != DRIZZLE_RETURN_IO_WAIT && $ret != DRIZZLE_RETURN_OK) {
         die "query error: " . $drizzle->error(). '('.$drizzle->error_code .')';
     }
+    rewatch($kernel, $container);
     if ($query) {
         my $result = $query->result;
-        $kernel->select_pause_read($container->{con}->fh);
-        $kernel->select_pause_write($container->{con}->fh);
+        $kernel->select($container->{con}->fh);
         my ($callback, $sender) = ($container->{callback}, $container->{sender});
         if (defined $callback) {
             DEBUG2("CALLBACK TO $callback, $sender");
