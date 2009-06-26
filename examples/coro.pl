@@ -1,12 +1,6 @@
 use strict;
 use warnings;
 use Net::Drizzle ':constants';
-use HTTP::Engine;
-use Text::MicroTemplate 'render_mt';
-use HTTP::Request::Common;
-use IO::Handle;
-use Carp ();
-use Term::ANSIColor ':constants';
 use IO::Poll qw/POLLIN POLLOUT/;
 use Coro;
 use Coro::Handle;
