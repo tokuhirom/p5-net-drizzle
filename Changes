@@ -1,5 +1,9 @@
 Revision history for Perl extension Net::Drizzle
 
+0.05
+
+        - added $con->events() for event frameworks
+
 0.04
 
         - split XS code for each package
