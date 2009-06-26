@@ -54,7 +54,11 @@ result(SV*self)
 CODE:
     net_query *query = XS_STATE(net_query*, self);
     drizzle_result_st *result = drizzle_query_result(query->query);
-    RETVAL = _create_result(query->con, self, result);
+    if (result != NULL) {
+        RETVAL = _create_result(query->con, self, result);
+    } else {
+        RETVAL = &PL_sv_undef;
+    }
 OUTPUT:
     RETVAL
 
