@@ -27,10 +27,10 @@ sub one_request {
                       ->set_db('test_net_drizzle_crowler');
 
     my $sql = 'SELECT COUNT(*) FROM entry';
-    my $query;
     $con->query_add($sql);
     $drizzle->query_run; # connect to server
     my $fh = Coro::Handle->new_from_fh($con->fh);
+    my $query;
     while (not defined $query) {
         $query = $drizzle->query_run;
         if ($con->events & POLLIN) {
