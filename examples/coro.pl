@@ -18,6 +18,8 @@ sub main {
 sub one_request {
     my $i = shift;
 
+    print "start: $i\n";
+
     my $drizzle = Net::Drizzle->new()
                               ->add_options(DRIZZLE_NON_BLOCKING);
 
@@ -26,7 +28,7 @@ sub one_request {
                       ->set_charset(8)
                       ->set_db('test_net_drizzle_crowler');
 
-    my $sql = 'SELECT COUNT(*) FROM entry';
+    my $sql = "SELECT SLEEP(10-$i), NOW()";
     $con->query_add($sql);
     $drizzle->query_run; # connect to server
     my $fh = Coro::Handle->new_from_fh($con->fh);
@@ -42,7 +44,7 @@ sub one_request {
             $con->set_revents( POLLOUT );
         }
     }
-    my $count = $query->result->row_next->[0];
-    print "count: $count($i)\n";
+    my $count = $query->result->row_next->[1];
+    print "finished: $count($i)\n";
 };
 
