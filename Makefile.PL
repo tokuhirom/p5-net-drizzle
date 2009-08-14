@@ -28,6 +28,7 @@ render_mt('Connection.xs.tt' => 'Connection.xs');
 render_mt('Column.xs.mt' => 'Column.xs');
 render_mt('Result.xs.mt' => 'Result.xs');
 
+auto_set_repository;
 build_requires 'Test::More';
 use_test_base;
 auto_include;
