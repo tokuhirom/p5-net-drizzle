@@ -1,5 +1,9 @@
 Revision history for Perl extension Net::Drizzle
 
+0.06
+
+        - DRIZZLE_COLUMN_TYPE_DRIZZLE_VIRTUAL is removed at libdrizzle 0.4
+
 0.05
 
         - added $con->events() for event frameworks
