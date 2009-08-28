@@ -12,6 +12,8 @@ Net::Drizzle::Query - Query object for Net::Drizzle
 
 MODULE = Net::Drizzle::Query  PACKAGE = Net::Drizzle::Query
 
+VERSIONCHECK: DISABLE
+
 =item con
 
 Get a connection for a query.
