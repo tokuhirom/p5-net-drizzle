@@ -12,6 +12,8 @@ Net::Drizzle::Connection - Connection object for Net::Drizzle
 
 MODULE = Net::Drizzle::Connection  PACKAGE = Net::Drizzle::Connection
 
+PROTOTYPES: DISABLE
+
 VERSIONCHECK: DISABLE
 
 =item my $con = Net::Drizzle::Connection->new();
