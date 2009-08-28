@@ -2,7 +2,7 @@
     vim: ft=xs
 */
 #include "net_drizzle.h"
-
+#include "const.h"
 
 inline
 SV *_bless(const char *class, void *obj) {
@@ -100,7 +100,6 @@ XS(boot_Net__Drizzle__Connection);
 XS(boot_Net__Drizzle__Result);
 XS(boot_Net__Drizzle__Column);
 XS(boot_Net__Drizzle__Query);
-XS(boot_Net__Drizzle__Const);
 
 MODULE = Net::Drizzle  PACKAGE = Net::Drizzle
 
@@ -112,7 +111,7 @@ BOOT:
     boot_Net__Drizzle__Result(aTHX_ cv);
     boot_Net__Drizzle__Column(aTHX_ cv);
     boot_Net__Drizzle__Query(aTHX_ cv);
-    boot_Net__Drizzle__Const(aTHX_ cv);
+    setup_constants();
 
 SV*
 Net::Drizzle::new()

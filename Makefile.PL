@@ -22,7 +22,7 @@ makemaker_args(
     },
 );
 
-cc_files map { "$_\.c" } qw/Connection Drizzle Result Column Query Const/;
+cc_files map { "$_\.c" } qw/Connection Drizzle Result Column Query/;
 tests 't/*.t';
 recursive_author_tests('xt');
 render_mt('Drizzle.xs.tt' => 'Drizzle.xs');

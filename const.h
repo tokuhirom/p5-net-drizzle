@@ -1,10 +1,6 @@
 #include "net_drizzle.h"
 
-MODULE = Net::Drizzle::Const  PACKAGE = Net::Drizzle::Const
-
-VERSIONCHECK: DISABLE
-
-BOOT:
+STATIC void setup_constants() {
     HV* stash = gv_stashpvn("Net::Drizzle", strlen("Net::Drizzle"), TRUE);
     newCONSTSUB(stash, "DRIZZLE_DEFAULT_TCP_HOST", newSVpv(DRIZZLE_DEFAULT_TCP_HOST, strlen(DRIZZLE_DEFAULT_TCP_HOST)));
     newCONSTSUB(stash, "DRIZZLE_DEFAULT_TCP_PORT", newSViv(DRIZZLE_DEFAULT_TCP_PORT));
@@ -246,3 +242,5 @@ BOOT:
     newCONSTSUB(stash, "DRIZZLE_COLUMN_FLAGS_IN_PART_FUNC", newSViv(DRIZZLE_COLUMN_FLAGS_IN_PART_FUNC));
     newCONSTSUB(stash, "DRIZZLE_COLUMN_FLAGS_IN_ADD_INDEX", newSViv(DRIZZLE_COLUMN_FLAGS_IN_ADD_INDEX));
     newCONSTSUB(stash, "DRIZZLE_COLUMN_FLAGS_RENAMED", newSViv(DRIZZLE_COLUMN_FLAGS_RENAMED));
+}
+
