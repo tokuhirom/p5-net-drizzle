@@ -152,10 +152,12 @@ void
 DESTROY(SV* _self)
 CODE:
     LOG("DESTROY drizzle 0x%X, drizzle->refcnt=%d\n", (unsigned int)_self, (int)SvREFCNT(_self));
-    drizzle_st *drizzle = GET_DRIZZLE(_self);
+    net_drizzle * n_dr = XS_STATE(net_drizzle*, _self);
+    drizzle_st *drizzle = n_dr->drizzle;
     drizzle_free(drizzle);
     av_undef(GET_DRIZZLE_QUERIES(_self));
     Safefree(drizzle);
+    Safefree(n_dr);
 
 void
 query_run_all(SV *self)
