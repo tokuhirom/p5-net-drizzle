@@ -5,6 +5,8 @@ no_index 'tools/extlib/';
 
 can_cc or die "This module requires a C compiler";
 
+cc_warnings;
+
 makemaker_args(
     OBJECT  => '$(O_FILES)',
     LIBS    => '-ldrizzle',
