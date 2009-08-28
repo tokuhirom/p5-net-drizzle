@@ -101,16 +101,19 @@ XS(boot_Net__Drizzle__Result);
 XS(boot_Net__Drizzle__Column);
 XS(boot_Net__Drizzle__Query);
 
+#define call_sub_xs(name) \
+        PUSHMARK(mark); boot_Net__Drizzle__##name(aTHX_ cv)
+
 MODULE = Net::Drizzle  PACKAGE = Net::Drizzle
 
 PROTOTYPES: DISABLE
 
 BOOT:
     /* call other *.xs modules */
-    boot_Net__Drizzle__Connection(aTHX_ cv);
-    boot_Net__Drizzle__Result(aTHX_ cv);
-    boot_Net__Drizzle__Column(aTHX_ cv);
-    boot_Net__Drizzle__Query(aTHX_ cv);
+    call_sub_xs(Connection);
+    call_sub_xs(Result);
+    call_sub_xs(Column);
+    call_sub_xs(Query);
     setup_constants();
 
 SV*
