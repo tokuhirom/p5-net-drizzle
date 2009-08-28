@@ -307,7 +307,7 @@ PPCODE:
     size_t total;
     drizzle_field_t field = drizzle_field_buffer(result->result, &total, &ret);
     mXPUSHi(ret);
-    mXPUSHs(newSVpv(field, total));
+    mXPUSHs(field != NULL ? newSVpv(field, total) : newSV(0));
     XSRETURN(2);
 
 =back
