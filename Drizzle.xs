@@ -95,6 +95,13 @@ SV* row2arrayref(drizzle_row_t row, uint16_t cnt) {
     return newRV_noinc((SV*)res);
 }
 
+/* prototype for sub xs modules */
+XS(boot_Net__Drizzle__Connection);
+XS(boot_Net__Drizzle__Result);
+XS(boot_Net__Drizzle__Column);
+XS(boot_Net__Drizzle__Query);
+XS(boot_Net__Drizzle__Const);
+
 MODULE = Net::Drizzle  PACKAGE = Net::Drizzle
 
 PROTOTYPES: DISABLE
