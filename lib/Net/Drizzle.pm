@@ -407,6 +407,8 @@ Tokuhiro Matsuno E<lt>tokuhirom @*(#RJKLFHFSDLJF gmail.comE<gt>
 
 kazuhooku(many advice and suggested to write this module)
 
+gfx++(xs)
+
 =head1 SEE ALSO
 
 L<DBD::Drizzle>

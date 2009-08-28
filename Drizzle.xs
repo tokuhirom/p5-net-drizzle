@@ -101,8 +101,7 @@ XS(boot_Net__Drizzle__Result);
 XS(boot_Net__Drizzle__Column);
 XS(boot_Net__Drizzle__Query);
 
-#define call_sub_xs(name) \
-        PUSHMARK(mark); boot_Net__Drizzle__##name(aTHX_ cv)
+#define call_sub_xs(name)         PUSHMARK(mark); boot_Net__Drizzle__##name(aTHX_ cv)
 
 MODULE = Net::Drizzle  PACKAGE = Net::Drizzle
 
