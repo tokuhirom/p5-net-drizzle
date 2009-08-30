@@ -1,5 +1,13 @@
 Revision history for Perl extension Net::Drizzle
 
+0.07
+
+        - fixed null pointer exception(by kazuho++)
+        - fixed memory leak(valgrind++)
+        - fixed xs calling method(gfx++)
+        - remove version check in sub module
+        - avoid warnings
+
 0.06
 
         - DRIZZLE_COLUMN_TYPE_DRIZZLE_VIRTUAL is removed at libdrizzle 0.4
